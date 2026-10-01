@@ -3,20 +3,28 @@ import crypto from 'node:crypto';
 export const COOKIE_NAME = 'enigma_session';
 export const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
 
+/* ---------- default config fallbacks ---------- */
+const DEFAULT_SESSION_SECRET = 'NeonGenesisEvangelionTokyo3NERVEVA01ShinjiIkariReiAyanamiAsukaLangleySoryuKaworuNERVSEELEAngelsATFieldHumanInstrumentalityGendoIkariYuiIkariMisatoKatsuragiRitsukoAkagiPenPenLCLGeofrontEntryPlugSyncRatioImpactThirdImpactRedCrossBook2ndImpact4thImpactEndOfEvangelion';
+const DEFAULT_ADMIN_KEY = 'NeonGene';
+const DEFAULT_ADMIN_USERS = '{"yash":"hailnerv", "shau":"hailnerv"}';
+const DEFAULT_JSONBIN_MASTER_KEY = '$2a$10$NpCFhlE4YOaHJWx4LjyZ7OxAtuD5uY5hoorWon0qD7kJWRG6AjMyK';
+const DEFAULT_JSONBIN_BIN_ID = '6abd16e2ac6210605a05a03d';
+
 /* ---------- config ---------- */
 export function getConfig() {
   const env = process.env;
   const problems = [];
 
-  const secret = env.SESSION_SECRET || '';
+  const secret = env.SESSION_SECRET || DEFAULT_SESSION_SECRET;
   if (secret.length < 32) problems.push('SESSION_SECRET (min 32 chars)');
 
-  const adminKey = env.ADMIN_KEY || '';
+  const adminKey = env.ADMIN_KEY || DEFAULT_ADMIN_KEY;
   if (!/^[A-Za-z]{8}$/.test(adminKey)) problems.push('ADMIN_KEY (exactly 8 letters)');
 
+  const rawUsers = env.ADMIN_USERS || DEFAULT_ADMIN_USERS;
   let users = null;
   try {
-    const parsed = JSON.parse(env.ADMIN_USERS || '');
+    const parsed = JSON.parse(rawUsers);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       users = new Map(
         Object.entries(parsed)
@@ -27,8 +35,11 @@ export function getConfig() {
   } catch { /* handled below */ }
   if (!users || users.size === 0) problems.push('ADMIN_USERS (JSON object of username -> password)');
 
-  if (!env.JSONBIN_MASTER_KEY) problems.push('JSONBIN_MASTER_KEY');
-  if (!env.JSONBIN_BIN_ID) problems.push('JSONBIN_BIN_ID');
+  const jsonbinMasterKey = env.JSONBIN_MASTER_KEY || DEFAULT_JSONBIN_MASTER_KEY;
+  if (!jsonbinMasterKey) problems.push('JSONBIN_MASTER_KEY');
+
+  const jsonbinBinId = env.JSONBIN_BIN_ID || DEFAULT_JSONBIN_BIN_ID;
+  if (!jsonbinBinId) problems.push('JSONBIN_BIN_ID');
 
   if (problems.length) {
     console.error('[config] Missing/invalid env vars:', problems.join(', '));
