@@ -69,6 +69,7 @@ export default async (req) => {
 
   const admin = getAdmin(req, cfg);
   if (!admin) return json({ error: 'Unauthorized' }, 401);
+  const adminUsername = admin.username || 'admin';
 
   const url = new URL(req.url, 'http://localhost');
   const searchParams = url.searchParams;
@@ -78,7 +79,12 @@ export default async (req) => {
     // GET /api/attendance: Filter logs or cumulative counts by department & search
     // -------------------------------------------------------------
     if (req.method === 'GET') {
-      const department = searchParams.get('department') || 'all';
+      let department = searchParams.get('department') || 'all';
+      // Restrict Department Admins to their designated department only
+      if (admin.department && admin.department !== 'all') {
+        department = admin.department;
+      }
+
       const search = searchParams.get('search') || '';
       const type = searchParams.get('type') || 'logs'; // 'logs' or 'counts'
       const date = searchParams.get('date') || '';
@@ -155,8 +161,13 @@ export default async (req) => {
       const { data, tooLarge } = await readJson(req, 8000);
       if (tooLarge) return json({ error: 'Payload too large' }, 413);
 
-      const { entry, error } = buildEntry(data, admin);
+      const { entry, error } = buildEntry(data, adminUsername);
       if (error) return json({ error }, 400);
+
+      // Department Admin isolation: enforce assigned department
+      if (admin.department && admin.department !== 'all' && entry.dutyDepartment.id !== admin.department) {
+        return json({ error: 'Unauthorized: You can only record attendance for your assigned department' }, 403);
+      }
 
       const mongoStatus = await checkMongoConnection();
 
@@ -169,7 +180,7 @@ export default async (req) => {
           year: entry.studentDetails.year,
           classBatch: entry.studentDetails.classBatch,
           department: entry.dutyDepartment.id,
-          addedBy: admin,
+          addedBy: adminUsername,
         });
 
         // 2. Insert attendance record & atomically increment all-days attendance counts
@@ -177,7 +188,7 @@ export default async (req) => {
           studentDetails: entry.studentDetails,
           dutyDepartment: entry.dutyDepartment,
           attendanceLog: entry.attendanceLog,
-          loggedBy: admin,
+          loggedBy: adminUsername,
         });
       }
 

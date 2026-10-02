@@ -2,6 +2,7 @@ import {
   getConfig, verifyPassword, burnPasswordCheck, safeEqual, signSession, sessionCookie,
   isSafePost, readJson, json, lockedFor, recordFail, clearFails, SESSION_TTL_S,
 } from '../lib/auth.js';
+import { verifyCredentials } from '../../src/config/adminAccounts.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -25,24 +26,48 @@ export default async (req, context) => {
   const wait = Math.max(lockedFor(ipKey), lockedFor(userKey));
   if (wait) return json({ error: 'Too many attempts. Try again later.' }, 429, { 'Retry-After': String(wait) });
 
-  // Always run every check so timing doesn't reveal which factor was wrong.
-  const stored = cfg.users.get(username);
-  let passOk = false;
-  if (stored) passOk = verifyPassword(password, stored);
-  else burnPasswordCheck(password);
-  const keyOk = safeEqual(adminKey, cfg.adminKey);
+  // 1. Verify against central ADMIN_ACCOUNTS (department admins + master admins)
+  let verified = verifyCredentials(username, password, adminKey);
 
-  if (!(stored && passOk && keyOk)) {
+  // 2. Legacy / env-fallback verification
+  if (!verified && cfg.users?.has(username)) {
+    const stored = cfg.users.get(username);
+    const passOk = verifyPassword(password, stored);
+    const keyOk = safeEqual(adminKey, cfg.adminKey);
+    if (passOk && keyOk) {
+      verified = {
+        username,
+        name: username,
+        department: 'all',
+        role: 'master_admin',
+        departmentName: 'All Departments',
+      };
+    }
+  }
+
+  if (!verified) {
+    burnPasswordCheck(password);
     recordFail(ipKey);
     if (username) recordFail(userKey);
-    await sleep(500 + Math.random() * 300);
+    await sleep(400 + Math.random() * 200);
     return json({ error: 'Invalid credentials' }, 401);
   }
 
   clearFails(userKey);
-  return json({ ok: true, username }, 200, {
-    'Set-Cookie': sessionCookie(req, signSession(username, cfg.secret), SESSION_TTL_S),
-  });
+  return json(
+    {
+      ok: true,
+      username: verified.username,
+      name: verified.name,
+      department: verified.department,
+      role: verified.role,
+      departmentName: verified.departmentName,
+    },
+    200,
+    {
+      'Set-Cookie': sessionCookie(req, signSession(verified, cfg.secret), SESSION_TTL_S),
+    }
+  );
 };
 
 export const config = { path: '/api/login' };

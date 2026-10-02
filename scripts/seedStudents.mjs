@@ -114,6 +114,7 @@ const deptMap = {
   decor: 'decor',
   technical: 'technical',
   flashmob: 'flashmob',
+  anchoring: 'anchoring',
   deskduty: 'desk_duty',
   'desk duty': 'desk_duty',
 };

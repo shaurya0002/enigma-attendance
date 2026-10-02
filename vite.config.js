@@ -3,8 +3,11 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { verifyCredentials } from './src/config/adminAccounts.js';
 
 function localDevApiPlugin() {
+  let currentDevSession = null;
+
   return {
     name: 'local-dev-api-middleware',
     configureServer(server) {
@@ -14,7 +17,52 @@ function localDevApiPlugin() {
         // Local Dev Mock: /api/session
         if (url.pathname === '/api/session') {
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ username: 'dev_admin' }));
+          if (currentDevSession) {
+            res.end(JSON.stringify({ authenticated: true, ...currentDevSession }));
+          } else {
+            res.statusCode = 401;
+            res.end(JSON.stringify({ authenticated: false }));
+          }
+          return;
+        }
+
+        // Local Dev Mock: /api/login
+        if (url.pathname === '/api/login' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const data = JSON.parse(body);
+              const username = String(data.username || '').trim().toLowerCase();
+              const password = String(data.password || '');
+              const adminKey = String(data.adminKey || '').trim();
+
+              const verified = verifyCredentials(username, password, adminKey);
+              if (verified) {
+                currentDevSession = verified;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ ok: true, ...verified }));
+                return;
+              }
+
+              res.setHeader('Content-Type', 'application/json');
+              res.statusCode = 401;
+              res.end(JSON.stringify({ error: 'Invalid credentials' }));
+              return;
+            } catch (e) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: e.message }));
+              return;
+            }
+          });
+          return;
+        }
+
+        // Local Dev Mock: /api/logout
+        if (url.pathname === '/api/logout' && req.method === 'POST') {
+          currentDevSession = null;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true }));
           return;
         }
 
@@ -28,7 +76,10 @@ function localDevApiPlugin() {
               if (fs.existsSync(dataPath)) {
                 students = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
               }
-              const dept = url.searchParams.get('department') || 'all';
+              let dept = url.searchParams.get('department') || 'all';
+              if (currentDevSession?.department && currentDevSession.department !== 'all') {
+                dept = currentDevSession.department;
+              }
               const search = (url.searchParams.get('search') || '').toLowerCase().trim();
               const filtered = students.filter((s) => {
                 if (dept !== 'all' && s.department !== dept) return false;
@@ -58,8 +109,11 @@ function localDevApiPlugin() {
                 if (fs.existsSync(dataPath)) {
                   students = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
                 }
+                let cleanDept = String(data.department || '').trim().toLowerCase();
+                if (currentDevSession?.department && currentDevSession.department !== 'all') {
+                  cleanDept = currentDevSession.department;
+                }
                 const cleanRoll = String(data.rollNumber || '').trim().toUpperCase();
-                const cleanDept = String(data.department || '').trim().toLowerCase();
                 const newStudent = {
                   id: `STU_${Date.now()}`,
                   name: String(data.name || '').trim(),
@@ -100,7 +154,10 @@ function localDevApiPlugin() {
                 if (raw.trim()) logs = JSON.parse(raw);
               }
               const type = url.searchParams.get('type') || 'logs';
-              const dept = url.searchParams.get('department') || 'all';
+              let dept = url.searchParams.get('department') || 'all';
+              if (currentDevSession?.department && currentDevSession.department !== 'all') {
+                dept = currentDevSession.department;
+              }
               const search = (url.searchParams.get('search') || '').toLowerCase().trim();
 
               const filtered = logs.filter((l) => {

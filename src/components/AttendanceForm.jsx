@@ -23,14 +23,19 @@ import { EVENT_TEAMS, ACADEMIC_YEARS, STANDARD_LECTURES } from '../config/teams'
 import { addLog, listStudents, addStudent } from '../services/api';
 import { filterRoster, registerStudentLocally } from '../data/studentsData';
 
-export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
-  // Department Selection State
-  const [selectedTeam, setSelectedTeam] = useState(EVENT_TEAMS[0].id);
+export default function AttendanceForm({ onSubmitSuccess, onAuthLost, currentAdmin }) {
+  const isMaster = !currentAdmin || currentAdmin.department === 'all' || currentAdmin.role === 'master_admin' || currentAdmin.role === 'super_admin';
+  const defaultDept = !isMaster && currentAdmin?.department ? currentAdmin.department : EVENT_TEAMS[0].id;
+
+  // Department Selection State (Master Admin can select, Sub Admin is locked)
+  const [masterSelectedTeam, setMasterSelectedTeam] = useState(defaultDept);
+  const selectedTeam = isMaster ? masterSelectedTeam : (currentAdmin?.department || defaultDept);
+  const effectiveTeam = selectedTeam;
 
   // Student Candidates & Search Filtration State
   const [candidateSearch, setCandidateSearch] = useState('');
   const [candidateList, setCandidateList] = useState(() => 
-    filterRoster({ department: EVENT_TEAMS[0].id, search: '' })
+    filterRoster({ department: defaultDept, search: '' })
   );
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -87,16 +92,17 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     let ignore = false;
     Promise.resolve().then(async () => {
       if (ignore) return;
-      await fetchCandidates(selectedTeam, candidateSearch);
+      await fetchCandidates(effectiveTeam, candidateSearch);
     });
     return () => {
       ignore = true;
     };
-  }, [selectedTeam, candidateSearch, fetchCandidates]);
+  }, [effectiveTeam, candidateSearch, fetchCandidates]);
 
-  // When department switches, reset candidate selection and show new dept candidates
+  // When department switches (Master Admin only), reset candidate selection and show new dept candidates
   const handleDepartmentChange = (deptId) => {
-    setSelectedTeam(deptId);
+    if (!isMaster) return; // Prevent department changing for department admins
+    setMasterSelectedTeam(deptId);
     setSelectedCandidate(null);
     setCandidateSearch('');
     setCandidateList(filterRoster({ department: deptId, search: '' }));
@@ -150,7 +156,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
       contact: contactNumber.trim(),
       year: year || '2nd Year',
       classBatch: studentClass || 'General',
-      department: selectedTeam,
+      department: effectiveTeam,
     };
 
     // 1. Save locally to localStorage so it's instantly available in search & offline
@@ -162,7 +168,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     // 3. Update candidateList in current state immediately
     setCandidateList((prev) => [
       candidatePayload,
-      ...prev.filter((c) => !(c.rollNumber === cleanRoll && (c.department || selectedTeam) === selectedTeam)),
+      ...prev.filter((c) => !(c.rollNumber === cleanRoll && (c.department || effectiveTeam) === effectiveTeam)),
     ]);
 
     // 4. Save to backend database
@@ -173,7 +179,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     } finally {
       setIsRegisteringStudent(false);
       setManualEntryMode(false);
-      const deptObj = EVENT_TEAMS.find((t) => t.id === selectedTeam) || EVENT_TEAMS[0];
+      const deptObj = EVENT_TEAMS.find((t) => t.id === effectiveTeam) || EVENT_TEAMS[0];
       setManualAddSuccess(`${candidatePayload.name} (${cleanRoll}) is now added to ${deptObj.name} roster!`);
       setTimeout(() => setManualAddSuccess(''), 5000);
     }
@@ -211,7 +217,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     const newErrors = {};
     if (!studentName.trim()) newErrors.studentName = 'Please select or enter the student name';
     if (!rollNumber.trim()) newErrors.rollNumber = 'University roll number is required';
-    if (!selectedTeam) newErrors.selectedTeam = 'Please select a duty department';
+    if (!effectiveTeam) newErrors.selectedTeam = 'Please select a duty department';
     if (selectedLectures.length === 0 && extraAttendance === 0) {
       newErrors.selectedLectures = 'Select at least one lecture or add extra attendance (+1/+2)';
     }
@@ -235,7 +241,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
       contact: contactNumber.trim(),
       year: year || '2nd Year',
       classBatch: studentClass || 'General',
-      department: selectedTeam,
+      department: effectiveTeam,
     };
 
     registerStudentLocally(candidateData);
@@ -246,7 +252,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     // Update candidate list in state so they are permanently visible in that department
     setCandidateList((prev) => {
       const filtered = prev.filter(
-        (c) => !(c.rollNumber === cleanRoll && (c.department || selectedTeam) === selectedTeam)
+        (c) => !(c.rollNumber === cleanRoll && (c.department || effectiveTeam) === effectiveTeam)
       );
       return [candidateData, ...filtered];
     });
@@ -257,7 +263,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
       contact: contactNumber.trim(),
       year,
       classBatch: studentClass,
-      teamId: selectedTeam,
+      teamId: effectiveTeam,
       date: attendanceDate,
       lectures: selectedLectures,
       extraAttendance,
@@ -272,7 +278,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
   };
 
   const totalEffectivePeriods = selectedLectures.length + extraAttendance;
-  const currentDeptObj = EVENT_TEAMS.find((t) => t.id === selectedTeam) || EVENT_TEAMS[0];
+  const currentDeptObj = EVENT_TEAMS.find((t) => t.id === effectiveTeam) || EVENT_TEAMS[0];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-left">
@@ -284,52 +290,78 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
             <Users className="w-4 h-4 text-[#a51c30]" />
             <span>I. Appointed Duty Committee</span>
           </div>
-          <span className="text-[11px] text-stone-500 font-serif italic">Choose department first</span>
+          <span className="text-[11px] text-stone-500 font-serif italic">
+            {isMaster ? 'Master Control: Choose department' : 'Designated Department (Locked)'}
+          </span>
         </div>
 
-        <p className="text-xs text-stone-600 font-sans mb-3">
-          Select the official ENIGMA committee to filter and search candidates registered for duty.
-        </p>
-
-        {/* Scrollable Team Selector */}
-        <div className="max-h-52 overflow-y-auto pr-1 space-y-2 custom-scrollbar rounded-xl">
-          {EVENT_TEAMS.map((team) => {
-            const isSelected = selectedTeam === team.id;
-            return (
-              <div
-                key={team.id}
-                onClick={() => handleDepartmentChange(team.id)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                  isSelected
-                    ? 'bg-[#a51c30] text-white border-[#c59b27] shadow-sm'
-                    : 'bg-[#faf9f6] border-stone-200 hover:border-[#a51c30]/60 text-stone-800'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
-                    isSelected ? 'border-[#c59b27] bg-[#c59b27] text-[#1e1e1e]' : 'border-stone-400 bg-white'
-                  }`}>
-                    {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <h4 className={`text-sm font-serif font-bold ${isSelected ? 'text-white' : 'text-stone-900'}`}>
-                      {team.name}
-                    </h4>
-                    <p className={`text-[11px] font-sans ${isSelected ? 'text-stone-200' : 'text-stone-500'}`}>
-                      {team.description}
-                    </p>
-                  </div>
-                </div>
-
-                <span className={`px-2 py-0.5 rounded text-[10px] font-serif font-bold uppercase tracking-wider flex-shrink-0 ${
-                  isSelected ? 'bg-[#7f1322] text-[#f5e6be] border border-[#c59b27]/40' : 'bg-[#a51c30]/10 text-[#a51c30] border border-[#a51c30]/20'
-                }`}>
-                  {team.badge}
+        {!isMaster ? (
+          <div className="p-4 rounded-xl bg-[#faf9f6] border-2 border-[#a51c30]/30 flex items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <h3 className="font-serif font-bold text-base text-[#a51c30]">
+                  {currentDeptObj.name} Department
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#a51c30]/10 text-[#a51c30] border border-[#a51c30]/20 uppercase">
+                  {currentDeptObj.badge}
                 </span>
               </div>
-            );
-          })}
-        </div>
+              <p className="text-xs text-stone-600 font-sans">
+                {currentDeptObj.description}
+              </p>
+              <p className="text-[11px] text-stone-500 font-serif italic mt-1.5">
+                Appointed Officer: <strong className="text-stone-800 font-sans">{currentAdmin?.name || currentAdmin?.username}</strong> &bull; Showing only candidates registered under {currentDeptObj.name}.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-stone-600 font-sans mb-3">
+              Master Admin Control: Select any official ENIGMA committee to filter and search candidates registered for duty.
+            </p>
+
+            {/* Scrollable Team Selector */}
+            <div className="max-h-52 overflow-y-auto pr-1 space-y-2 custom-scrollbar rounded-xl">
+              {EVENT_TEAMS.map((team) => {
+                const isSelected = effectiveTeam === team.id;
+                return (
+                  <div
+                    key={team.id}
+                    onClick={() => handleDepartmentChange(team.id)}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      isSelected
+                        ? 'bg-[#a51c30] text-white border-[#c59b27] shadow-sm'
+                        : 'bg-[#faf9f6] border-stone-200 hover:border-[#a51c30]/60 text-stone-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                        isSelected ? 'border-[#c59b27] bg-[#c59b27] text-[#1e1e1e]' : 'border-stone-400 bg-white'
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                      <div>
+                        <h4 className={`text-sm font-serif font-bold ${isSelected ? 'text-white' : 'text-stone-900'}`}>
+                          {team.name}
+                        </h4>
+                        <p className={`text-[11px] font-sans ${isSelected ? 'text-stone-200' : 'text-stone-500'}`}>
+                          {team.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-serif font-bold uppercase tracking-wider flex-shrink-0 ${
+                      isSelected ? 'bg-[#7f1322] text-[#f5e6be] border border-[#c59b27]/40' : 'bg-[#a51c30]/10 text-[#a51c30] border border-[#a51c30]/20'
+                    }`}>
+                      {team.badge}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* SECTION 2: Student Identity - Database Search Filtration */}

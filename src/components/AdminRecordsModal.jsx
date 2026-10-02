@@ -17,15 +17,19 @@ import { listLogs, listAttendanceCounts, listStudents } from '../services/api';
 import { EVENT_TEAMS } from '../config/teams';
 import { filterRoster } from '../data/studentsData';
 
-export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
+export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, currentAdmin }) {
+  const isMaster = !currentAdmin || currentAdmin.department === 'all' || currentAdmin.role === 'master_admin' || currentAdmin.role === 'super_admin';
+  const defaultDept = !isMaster && currentAdmin?.department ? currentAdmin.department : 'all';
+
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'all_logs'
-  const [selectedDept, setSelectedDept] = useState('all');
+  const [masterSelectedDept, setMasterSelectedDept] = useState(defaultDept);
+  const selectedDept = isMaster ? masterSelectedDept : (currentAdmin?.department || defaultDept);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedStudents, setExpandedStudents] = useState({});
 
   const [logs, setLogs] = useState([]);
   const [counts, setCounts] = useState(() =>
-    filterRoster({ department: 'all', search: '' }).map((s) => ({
+    filterRoster({ department: defaultDept, search: '' }).map((s) => ({
       rollNumber: s.rollNumber,
       name: s.name,
       contact: s.contact,
@@ -51,8 +55,10 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
     setLoading(true);
     setError(null);
 
+    const activeDept = !isMaster && currentAdmin?.department ? currentAdmin.department : selectedDept;
+
     const params = {
-      department: selectedDept !== 'all' ? selectedDept : '',
+      department: activeDept !== 'all' ? activeDept : '',
       search: searchTerm.trim(),
     };
 
@@ -72,7 +78,7 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
       const receivedLogs = logsRes.ok && Array.isArray(logsRes.data?.logs) ? logsRes.data.logs : [];
       setLogs(receivedLogs);
 
-      const rosterList = filterRoster({ department: selectedDept, search: searchTerm.trim() });
+      const rosterList = filterRoster({ department: activeDept, search: searchTerm.trim() });
       if (studentsRes?.ok && Array.isArray(studentsRes.data?.students)) {
         studentsRes.data.students.forEach((stu) => {
           if (!rosterList.some((r) => r.rollNumber === stu.rollNumber && r.department === stu.department)) {
@@ -115,7 +121,7 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
       setLoading(false);
       setError(err.message || 'Failed to query records');
     }
-  }, [selectedDept, searchTerm, onAuthLost]);
+  }, [isMaster, currentAdmin, selectedDept, searchTerm, onAuthLost]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -206,18 +212,25 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
             {/* Department Selector */}
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] font-serif font-bold text-stone-500 uppercase tracking-wider">Department:</span>
-              <select
-                value={selectedDept}
-                onChange={(e) => setSelectedDept(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-[#faf9f6] border border-stone-300 text-stone-800 text-xs font-serif font-bold focus:outline-none focus:border-[#a51c30] cursor-pointer"
-              >
-                <option value="all">All Departments ({EVENT_TEAMS.length})</option>
-                {EVENT_TEAMS.map((dept) => (
-                  <option key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </option>
-                ))}
-              </select>
+              {!isMaster ? (
+                <div className="px-3 py-1.5 rounded-xl bg-[#a51c30]/10 border border-[#a51c30]/25 text-[#a51c30] text-xs font-serif font-bold flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{currentAdmin?.departmentName || currentAdmin?.department} (Locked)</span>
+                </div>
+              ) : (
+                <select
+                  value={masterSelectedDept}
+                  onChange={(e) => setMasterSelectedDept(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl bg-[#faf9f6] border border-stone-300 text-stone-800 text-xs font-serif font-bold focus:outline-none focus:border-[#a51c30] cursor-pointer"
+                >
+                  <option value="all">All Departments ({EVENT_TEAMS.length})</option>
+                  {EVENT_TEAMS.map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 

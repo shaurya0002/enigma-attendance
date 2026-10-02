@@ -43,6 +43,12 @@ export const EVENT_TEAMS = [
     badge: 'Activities'
   },
   {
+    id: 'anchoring',
+    name: 'Anchoring',
+    description: 'Stage hosting, audience engagement, announcements, ceremony presentations and speaker introductions.',
+    badge: 'Anchoring'
+  },
+  {
     id: 'flashmob',
     name: 'Flashmob',
     description: 'Choreography, performance rehearsals, publicity dance routines and promotional activation.',

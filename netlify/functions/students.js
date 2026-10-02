@@ -13,7 +13,11 @@ export default async (req) => {
     // GET /api/students: Search & filter students by department
     // -------------------------------------------------------------
     if (req.method === 'GET') {
-      const department = searchParams.get('department') || 'all';
+      const admin = cfg ? getAdmin(req, cfg) : null;
+      let department = searchParams.get('department') || 'all';
+      if (admin?.department && admin.department !== 'all') {
+        department = admin.department;
+      }
       const search = searchParams.get('search') || '';
       const year = searchParams.get('year') || 'all';
 
@@ -43,7 +47,12 @@ export default async (req) => {
       const contact = typeof data?.contact === 'string' ? data.contact.trim().slice(0, 20) : '';
       const year = data?.year;
       const classBatch = typeof data?.classBatch === 'string' ? data.classBatch.trim().toUpperCase().slice(0, 20) : 'General';
-      const department = typeof data?.department === 'string' ? data.department.trim().toLowerCase() : '';
+      let department = typeof data?.department === 'string' ? data.department.trim().toLowerCase() : '';
+
+      // Enforce department admin assignment
+      if (admin.department && admin.department !== 'all') {
+        department = admin.department;
+      }
 
       if (!name) return json({ error: 'Student name is required' }, 400);
       if (!rollNumber) return json({ error: 'Roll number is required' }, 400);
@@ -61,7 +70,7 @@ export default async (req) => {
           year,
           classBatch,
           department,
-          addedBy: admin,
+          addedBy: admin.username,
         });
       } else {
         // Fallback local persistence
@@ -74,7 +83,7 @@ export default async (req) => {
           year,
           classBatch,
           department,
-          addedBy: admin,
+          addedBy: admin.username,
           createdAt: new Date().toISOString(),
         };
         const updated = [newStudent, ...existing.filter((s) => !(s.rollNumber === rollNumber && s.department === department))];

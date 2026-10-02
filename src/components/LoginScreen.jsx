@@ -23,7 +23,7 @@ export default function LoginScreen({ onLoggedIn }) {
     if (res.ok) {
       setPassword('');
       setAdminKey('');
-      onLoggedIn(res.data.username);
+      onLoggedIn(res.data);
     } else if (res.status === 429) {
       setError('Too many attempts. Try again later.');
     } else if (res.status === 401) {

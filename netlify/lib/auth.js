@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { getAdminByUsername } from '../../src/config/adminAccounts.js';
 
 export const COOKIE_NAME = 'enigma_session';
 export const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
@@ -11,16 +12,12 @@ const DEFAULT_ADMIN_USERS = '{"yash":"hailnerv", "shau":"hailnerv"}';
 /* ---------- config ---------- */
 export function getConfig() {
   const env = process.env;
-  const problems = [];
 
   const secret = env.SESSION_SECRET || DEFAULT_SESSION_SECRET;
-  if (secret.length < 32) problems.push('SESSION_SECRET (min 32 chars)');
-
   const adminKey = env.ADMIN_KEY || DEFAULT_ADMIN_KEY;
-  if (!/^[A-Za-z]{8}$/.test(adminKey)) problems.push('ADMIN_KEY (exactly 8 letters)');
 
   const rawUsers = env.ADMIN_USERS || DEFAULT_ADMIN_USERS;
-  let users = null;
+  let users = new Map();
   try {
     const parsed = JSON.parse(rawUsers);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -31,18 +28,16 @@ export function getConfig() {
       );
     }
   } catch { /* handled below */ }
-  if (!users || users.size === 0) problems.push('ADMIN_USERS (JSON object of username -> password)');
 
-  if (problems.length) {
-    console.error('[config] Missing/invalid env vars:', problems.join(', '));
-    return null;
-  }
   return { secret, adminKey, users };
 }
 
 /* ---------- crypto helpers ---------- */
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest();
-export const safeEqual = (a, b) => crypto.timingSafeEqual(sha(a), sha(b));
+export const safeEqual = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  return crypto.timingSafeEqual(sha(a), sha(b));
+};
 
 const DUMMY_HASH = `scrypt$${'00'.repeat(16)}$${'00'.repeat(64)}`;
 
@@ -63,8 +58,21 @@ export const burnPasswordCheck = (input) => { verifyPassword(input, DUMMY_HASH);
 const b64u = (buf) => Buffer.from(buf).toString('base64url');
 const hmac = (data, secret) => crypto.createHmac('sha256', secret).update(data).digest();
 
-export function signSession(username, secret) {
-  const payload = b64u(JSON.stringify({ u: username, exp: Math.floor(Date.now() / 1000) + SESSION_TTL_S }));
+export function signSession(user, secret) {
+  const username = typeof user === 'object' ? user.username : user;
+  const department = typeof user === 'object' ? (user.department || 'all') : 'all';
+  const role = typeof user === 'object' ? (user.role || 'master_admin') : 'master_admin';
+  const name = typeof user === 'object' ? (user.name || username) : username;
+
+  const payload = b64u(
+    JSON.stringify({
+      u: username,
+      dept: department,
+      role,
+      name,
+      exp: Math.floor(Date.now() / 1000) + SESSION_TTL_S,
+    })
+  );
   return `${payload}.${b64u(hmac(payload, secret))}`;
 }
 
@@ -76,9 +84,14 @@ function verifySession(token, secret) {
   const given = Buffer.from(sig, 'base64url');
   if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return null;
   try {
-    const { u, exp } = JSON.parse(Buffer.from(payload, 'base64url').toString());
-    if (typeof u !== 'string' || typeof exp !== 'number' || exp < Date.now() / 1000) return null;
-    return u;
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    if (typeof data?.u !== 'string' || typeof data?.exp !== 'number' || data.exp < Date.now() / 1000) return null;
+    return {
+      username: data.u,
+      department: data.dept || 'all',
+      role: data.role || 'master_admin',
+      name: data.name || data.u,
+    };
   } catch { return null; }
 }
 
@@ -91,10 +104,32 @@ function readCookie(req, name) {
   return null;
 }
 
-/** Returns the admin username if the request has a valid session for a still-existing admin. */
+/** Returns the authenticated admin object with their username, name, department and role. */
 export function getAdmin(req, cfg) {
-  const u = verifySession(readCookie(req, COOKIE_NAME), cfg.secret);
-  return u && cfg.users.has(u) ? u : null;
+  const session = verifySession(readCookie(req, COOKIE_NAME), cfg.secret);
+  if (!session) return null;
+
+  const userRecord = getAdminByUsername(session.username);
+  if (userRecord) {
+    return {
+      username: userRecord.username,
+      name: userRecord.name,
+      department: userRecord.department,
+      role: userRecord.role,
+      departmentName: userRecord.departmentName,
+    };
+  }
+
+  if (cfg.users?.has(session.username)) {
+    return {
+      username: session.username,
+      name: session.name || session.username,
+      department: session.department || 'all',
+      role: session.role || 'master_admin',
+      departmentName: 'All Departments',
+    };
+  }
+  return null;
 }
 
 export function sessionCookie(req, value, maxAge) {

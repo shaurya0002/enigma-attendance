@@ -12,12 +12,20 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [recordsModalOpen, setRecordsModalOpen] = useState(false);
   const [submittedData, setSubmittedData] = useState(null);
-  const [admin, setAdmin] = useState(null); // username when signed in
+  const [adminUser, setAdminUser] = useState(null); // { username, department, role, name, departmentName }
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     checkSession().then((res) => {
-      if (res.ok) setAdmin(res.data.username);
+      if (res.ok && res.data?.authenticated) {
+        setAdminUser({
+          username: res.data.username,
+          department: res.data.department || 'all',
+          role: res.data.role || 'master_admin',
+          name: res.data.name || res.data.username,
+          departmentName: res.data.departmentName || 'All Departments',
+        });
+      }
       setChecking(false);
     });
   }, []);
@@ -25,7 +33,27 @@ export default function App() {
   const handleAuthLost = () => {
     setModalOpen(false);
     setRecordsModalOpen(false);
-    setAdmin(null);
+    setAdminUser(null);
+  };
+
+  const handleLoggedIn = (userData) => {
+    if (userData && typeof userData === 'object') {
+      setAdminUser({
+        username: userData.username,
+        department: userData.department || 'all',
+        role: userData.role || 'master_admin',
+        name: userData.name || userData.username,
+        departmentName: userData.departmentName || 'All Departments',
+      });
+    } else {
+      setAdminUser({
+        username: String(userData),
+        department: 'all',
+        role: 'master_admin',
+        name: String(userData),
+        departmentName: 'All Departments',
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -46,7 +74,7 @@ export default function App() {
     );
   }
 
-  if (!admin) return <LoginScreen onLoggedIn={setAdmin} />;
+  if (!adminUser) return <LoginScreen onLoggedIn={handleLoggedIn} />;
 
   return (
     <div className="relative min-h-screen w-full flex flex-col items-center justify-between pb-8">
@@ -84,14 +112,28 @@ export default function App() {
               <span className="hidden sm:inline">Official Ledger</span>
             </button>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/20 hover:bg-black/40 text-stone-200 hover:text-white transition-all text-xs font-serif cursor-pointer border border-white/10"
-              title="Sign Out"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="font-sans text-[11px] font-semibold">{admin}</span>
-            </button>
+            {/* Officer Identification Badge & Logout */}
+            <div className="flex items-center gap-2 pl-2 border-l border-white/20">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="font-serif font-bold text-xs text-white leading-tight">
+                  {adminUser.name}
+                </span>
+                <span className="text-[9.5px] font-sans font-semibold text-[#f5e6be] tracking-wider uppercase">
+                  {adminUser.department === 'all'
+                    ? (adminUser.role === 'super_admin' ? 'Super User (All Depts)' : 'Master Admin')
+                    : `${adminUser.departmentName || adminUser.department} Admin`}
+                </span>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/20 hover:bg-black/40 text-stone-200 hover:text-white transition-all text-xs font-serif cursor-pointer border border-white/10"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="sm:hidden font-sans text-[11px] font-semibold">{adminUser.username}</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -107,7 +149,11 @@ export default function App() {
         <EventHeader />
 
         {/* Attendance Form */}
-        <AttendanceForm onSubmitSuccess={handleFormSubmit} onAuthLost={handleAuthLost} />
+        <AttendanceForm
+          currentAdmin={adminUser}
+          onSubmitSuccess={handleFormSubmit}
+          onAuthLost={handleAuthLost}
+        />
 
         {/* Footer Credit & Admin Viewer Link */}
         <div className="mt-8 pt-4 border-t border-stone-200 flex items-center justify-between text-[11px] text-stone-500 font-serif">
@@ -135,6 +181,7 @@ export default function App() {
         isOpen={recordsModalOpen}
         onClose={() => setRecordsModalOpen(false)}
         onAuthLost={handleAuthLost}
+        currentAdmin={adminUser}
       />
     </div>
   );
