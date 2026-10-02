@@ -49,14 +49,14 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
       <div className="relative w-full max-w-4xl bg-white border border-[#a51c30]/30 rounded-3xl p-6 shadow-2xl text-stone-900 max-h-[90vh] flex flex-col overflow-hidden">
         
-        {/* Top Harvard Crimson Accent Bar */}
+        {/* Top Crimson Accent Bar */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-[#a51c30]" />
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 pt-1 border-b border-stone-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-[#a51c30] rounded-xl border border-[#c59b27] text-[#f5e6be] flex items-center justify-center font-serif font-bold text-sm shadow-sm">
-              TAS
+              EN
             </div>
             <div>
               <h3 className="text-xl font-serif font-bold text-stone-900 flex items-center gap-2">
@@ -65,7 +65,7 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
                   {logs.length} Entries Recorded
                 </span>
               </h3>
-              <p className="text-xs text-stone-500 font-serif italic">Harvard University · ENIGMA 2026 Registry</p>
+              <p className="text-xs text-stone-500 font-serif italic">Official Registry · ENIGMA 2026</p>
             </div>
           </div>
 

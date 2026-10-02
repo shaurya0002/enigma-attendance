@@ -53,23 +53,23 @@ export default function App() {
       {/* Background Academic Lighting */}
       <PartyBackground />
 
-      {/* Top Harvard University Navigation Bar */}
+      {/* Top Academic Navigation Bar */}
       <header className="relative z-20 w-full bg-[#a51c30] text-white border-b-2 border-[#c59b27] shadow-md px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           
-          {/* Harvard Crest + Title */}
+          {/* Crest + Title */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-9 bg-[#801424] border border-[#c59b27] rounded-b text-[#f5e6be] flex flex-col items-center justify-center font-serif text-[7px] font-bold leading-none shadow-sm">
-              <span>VE</span>
-              <span className="my-0.5">RI</span>
-              <span>TAS</span>
+            <div className="w-8 h-9 bg-[#801424] border border-[#c59b27] rounded-b text-[#f5e6be] flex flex-col items-center justify-center font-serif text-[7.5px] font-bold leading-none shadow-sm">
+              <span>EN</span>
+              <span className="my-0.5">IG</span>
+              <span>MA</span>
             </div>
             <div>
               <span className="font-serif font-bold text-sm md:text-base tracking-wider uppercase block">
-                Harvard University
+                ENIGMA 2026
               </span>
               <span className="text-[10px] text-[#f5e6be] font-serif italic block -mt-0.5">
-                ENIGMA 2026 · Attendance & Duty Registry
+                Official Duty & Attendance Registry
               </span>
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function App() {
       {/* Main Content Container - Center Academic Form Card */}
       <div className="relative z-10 w-full max-w-2xl bg-white border border-[#a51c30]/25 rounded-3xl p-6 md:p-8 shadow-xl my-6 mx-auto">
         
-        {/* Harvard Crimson accent top line */}
+        {/* Crimson accent top line */}
         <div className="absolute -top-px left-8 right-8 h-1 bg-[#a51c30]" />
         
         {/* Header Section */}
@@ -111,7 +111,7 @@ export default function App() {
 
         {/* Footer Credit & Admin Viewer Link */}
         <div className="mt-8 pt-4 border-t border-stone-200 flex items-center justify-between text-[11px] text-stone-500 font-serif">
-          <span>Harvard University &copy; ENIGMA Attendance System</span>
+          <span>ENIGMA 2026 &copy; Official Attendance & Duty Portal</span>
           
           <button 
             onClick={() => setRecordsModalOpen(true)}

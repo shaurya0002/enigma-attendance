@@ -34,7 +34,7 @@ export default function SubmissionModal({ isOpen, onClose, formData, jsonBinResu
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
       <div className="relative w-full max-w-lg bg-white border border-[#a51c30]/30 rounded-3xl p-6 shadow-2xl text-stone-900 overflow-hidden">
-        {/* Top Harvard Crimson accent bar */}
+        {/* Top Crimson accent bar */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-[#a51c30]" />
         
         {/* Close button */}

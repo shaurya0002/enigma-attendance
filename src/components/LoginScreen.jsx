@@ -44,19 +44,19 @@ export default function LoginScreen({ onLoggedIn }) {
         onSubmit={submit}
         className="relative z-10 w-full max-w-sm bg-white border border-[#a51c30]/30 rounded-3xl p-6 md:p-8 shadow-xl space-y-4 text-left overflow-hidden"
       >
-        {/* Harvard Crimson Top Accent Bar */}
+        {/* Crimson Top Accent Bar */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-[#a51c30]" />
 
-        {/* Harvard Shield Crest */}
+        {/* Shield Crest */}
         <div className="text-center pt-2 mb-2">
           <div className="flex justify-center mb-2">
             <div className="w-12 h-14 bg-[#a51c30] rounded-b-lg border-2 border-[#c59b27] flex flex-col items-center justify-center text-white shadow-sm">
-              <span className="text-[8px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">VE</span>
-              <span className="text-[8px] font-serif font-bold tracking-widest leading-none text-[#f5e6be] my-0.5">RI</span>
-              <span className="text-[8px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">TAS</span>
+              <span className="text-[8.5px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">EN</span>
+              <span className="text-[8.5px] font-serif font-bold tracking-widest leading-none text-[#f5e6be] my-0.5">IG</span>
+              <span className="text-[8.5px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">MA</span>
             </div>
           </div>
-          <h1 className="text-xl font-serif font-bold text-stone-900 tracking-tight">Harvard ENIGMA</h1>
+          <h1 className="text-xl font-serif font-bold text-stone-900 tracking-tight">ENIGMA 2026</h1>
           <p className="text-xs text-[#a51c30] font-serif italic mt-0.5">Authorised Officers Only</p>
         </div>
 

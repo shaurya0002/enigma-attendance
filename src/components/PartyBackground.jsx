@@ -3,7 +3,7 @@ import React from 'react';
 export default function PartyBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 bg-[#faf9f6]">
-      {/* Subtle Harvard Crimson Top Gradient Bar */}
+      {/* Subtle Crimson Top Gradient Bar */}
       <div className="absolute top-0 left-0 right-0 h-2 bg-[#a51c30]" />
       
       {/* Gold Sub-bar */}
@@ -27,7 +27,7 @@ export default function PartyBackground() {
         }}
       />
 
-      {/* Large Subtle Harvard Crimson Shield Watermark Background */}
+      {/* Large Subtle Crimson Shield Watermark Background */}
       <div className="absolute -bottom-24 -right-24 opacity-[0.03] text-[#a51c30] select-none pointer-events-none">
         <svg width="600" height="700" viewBox="0 0 100 120" fill="currentColor">
           <path d="M50 0 L95 20 L95 70 C95 100 50 120 50 120 C50 120 5 100 5 70 L5 20 Z" />

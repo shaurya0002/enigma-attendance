@@ -3,21 +3,21 @@ import React from 'react';
 export default function EventHeader() {
   return (
     <div className="text-center mb-8 relative">
-      {/* Harvard Shield & Veritas Crest emblem */}
+      {/* ENIGMA Shield Crest emblem */}
       <div className="flex justify-center mb-3">
         <div className="inline-flex flex-col items-center">
-          {/* Harvard Crimson Shield Icon */}
+          {/* Collegiate Crimson Shield Icon */}
           <div className="w-14 h-16 bg-[#a51c30] rounded-b-xl border-2 border-[#c59b27] flex flex-col items-center justify-center text-white shadow-md relative group">
-            <span className="text-[9px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">VE</span>
-            <span className="text-[9px] font-serif font-bold tracking-widest leading-none text-[#f5e6be] my-0.5">RI</span>
-            <span className="text-[9px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">TAS</span>
+            <span className="text-[9.5px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">EN</span>
+            <span className="text-[9.5px] font-serif font-bold tracking-widest leading-none text-[#f5e6be] my-0.5">IG</span>
+            <span className="text-[9.5px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">MA</span>
           </div>
         </div>
       </div>
 
-      {/* University Sub-header */}
+      {/* Collegiate Sub-header */}
       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#a51c30]/10 border border-[#a51c30]/20 text-[#a51c30] text-[11px] font-serif font-bold uppercase tracking-widest mb-2">
-        <span>Harvard University Official Registry</span>
+        <span>Official Collegiate Event Registry</span>
       </div>
 
       {/* Main Title: ENIGMA 2026 */}
@@ -45,7 +45,7 @@ export default function EventHeader() {
             <span className="w-2 h-2 rounded-full bg-[#a51c30] inline-block" />
             Official Academic Notice
           </span>
-          <span className="text-[10px] text-stone-500 font-serif font-semibold uppercase">Harvard Academic Affairs</span>
+          <span className="text-[10px] text-stone-500 font-serif font-semibold uppercase">Academic & Duty Affairs</span>
         </div>
 
         <p className="text-stone-700 font-sans text-xs md:text-sm">
