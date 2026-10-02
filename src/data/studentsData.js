@@ -108,10 +108,67 @@ export const STUDENTS_ROSTER = [
 ];
 
 /**
+ * Local storage persistence helper for manually added candidates.
+ */
+export function getCustomStudents() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = window.localStorage.getItem('enigma_custom_students');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return [];
+}
+
+export function registerStudentLocally(student) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const existing = getCustomStudents();
+      const cleanRoll = String(student.rollNumber || '').trim().toUpperCase();
+      const cleanDept = String(student.department || '').trim().toLowerCase();
+      const filtered = existing.filter(
+        (s) => !(s.rollNumber === cleanRoll && s.department === cleanDept)
+      );
+      const newEntry = {
+        ...student,
+        id: student.id || `CUSTOM_${Date.now()}`,
+        name: student.name.trim(),
+        rollNumber: cleanRoll,
+        contact: String(student.contact || '').trim(),
+        department: cleanDept,
+        year: student.year || '2nd Year',
+        classBatch: student.classBatch || 'General',
+        createdAt: new Date().toISOString(),
+      };
+      const updated = [newEntry, ...filtered];
+      window.localStorage.setItem('enigma_custom_students', JSON.stringify(updated));
+      return newEntry;
+    }
+  } catch (e) {
+    console.warn('Could not save to localStorage:', e);
+  }
+  return student;
+}
+
+export function getAllStudents() {
+  const custom = getCustomStudents();
+  const map = new Map();
+  STUDENTS_ROSTER.forEach((s) => map.set(`${s.rollNumber}_${s.department}`, s));
+  custom.forEach((c) => map.set(`${c.rollNumber}_${c.department}`, c));
+  return Array.from(map.values());
+}
+
+/**
  * Synchronous client-side filter helper for zero-latency UI searching.
  */
 export function filterRoster({ department, search, year }) {
-  return STUDENTS_ROSTER.filter((s) => {
+  const list = getAllStudents();
+  return list.filter((s) => {
     if (department && department !== 'all' && s.department !== department) {
       return false;
     }

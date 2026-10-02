@@ -20,35 +20,78 @@ function localDevApiPlugin() {
 
         // Local Dev Mock: /api/students
         if (url.pathname === '/api/students') {
-          try {
-            const dataPath = path.resolve('data', 'students.json');
-            let students = [];
-            if (fs.existsSync(dataPath)) {
-              students = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-            }
-            const dept = url.searchParams.get('department') || 'all';
-            const search = (url.searchParams.get('search') || '').toLowerCase().trim();
-            const filtered = students.filter((s) => {
-              if (dept && dept !== 'all' && s.department !== dept) return false;
-              if (search) {
-                const name = (s.name || '').toLowerCase();
-                const roll = (s.rollNumber || '').toLowerCase();
-                const contact = (s.contact || '').toLowerCase();
-                if (!name.includes(search) && !roll.includes(search) && !contact.includes(search)) return false;
+          const dataPath = path.resolve('data', 'students.json');
+
+          if (req.method === 'GET') {
+            try {
+              let students = [];
+              if (fs.existsSync(dataPath)) {
+                students = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
               }
-              return true;
+              const dept = url.searchParams.get('department') || 'all';
+              const search = (url.searchParams.get('search') || '').toLowerCase().trim();
+              const filtered = students.filter((s) => {
+                if (dept !== 'all' && s.department !== dept) return false;
+                if (search) {
+                  const name = (s.name || '').toLowerCase();
+                  const roll = (s.rollNumber || '').toLowerCase();
+                  const contact = (s.contact || '').toLowerCase();
+                  if (!name.includes(search) && !roll.includes(search) && !contact.includes(search)) return false;
+                }
+                return true;
+              });
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ students: filtered, source: 'vite_dev_server' }));
+              return;
+            } catch (e) {
+              console.error('[vite dev api] Error in /api/students GET:', e);
+            }
+          }
+
+          if (req.method === 'POST') {
+            let body = '';
+            req.on('data', (chunk) => { body += chunk; });
+            req.on('end', () => {
+              try {
+                const data = JSON.parse(body);
+                let students = [];
+                if (fs.existsSync(dataPath)) {
+                  students = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+                }
+                const cleanRoll = String(data.rollNumber || '').trim().toUpperCase();
+                const cleanDept = String(data.department || '').trim().toLowerCase();
+                const newStudent = {
+                  id: `STU_${Date.now()}`,
+                  name: String(data.name || '').trim(),
+                  rollNumber: cleanRoll,
+                  contact: String(data.contact || '').trim(),
+                  year: data.year || '2nd Year',
+                  classBatch: String(data.classBatch || 'General').trim().toUpperCase(),
+                  department: cleanDept,
+                  createdAt: new Date().toISOString(),
+                };
+                students = [newStudent, ...students.filter((s) => !(s.rollNumber === cleanRoll && s.department === cleanDept))];
+                fs.writeFileSync(dataPath, JSON.stringify(students, null, 2), 'utf8');
+                res.setHeader('Content-Type', 'application/json');
+                res.statusCode = 201;
+                res.end(JSON.stringify({ student: newStudent, message: 'Student registered in department' }));
+                return;
+              } catch (e) {
+                console.error('[vite dev api] Error in /api/students POST:', e);
+                res.statusCode = 400;
+                res.end(JSON.stringify({ error: e.message }));
+                return;
+              }
             });
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ students: filtered, source: 'vite_dev_server' }));
             return;
-          } catch (e) {
-            console.error('[vite dev api] Error in /api/students:', e);
           }
         }
 
         // Local Dev Mock: /api/attendance
         if (url.pathname === '/api/attendance') {
           const logsPath = path.resolve('data', 'attendance_logs.json');
+          const studentsPath = path.resolve('data', 'students.json');
+
           if (req.method === 'GET') {
             try {
               let logs = [];
@@ -123,6 +166,35 @@ function localDevApiPlugin() {
                   const raw = fs.readFileSync(logsPath, 'utf8');
                   if (raw.trim()) logs = JSON.parse(raw);
                 }
+
+                // Auto-upsert student into students.json if not present
+                if (data.name && data.rollNumber && data.teamId) {
+                  try {
+                    let students = [];
+                    if (fs.existsSync(studentsPath)) {
+                      students = JSON.parse(fs.readFileSync(studentsPath, 'utf8'));
+                    }
+                    const cleanRoll = String(data.rollNumber).trim().toUpperCase();
+                    const cleanDept = String(data.teamId).trim().toLowerCase();
+                    const exists = students.some((s) => s.rollNumber === cleanRoll && s.department === cleanDept);
+                    if (!exists) {
+                      students.unshift({
+                        id: `STU_${Date.now()}`,
+                        name: String(data.name).trim(),
+                        rollNumber: cleanRoll,
+                        contact: String(data.contact || '').trim(),
+                        year: data.year || '2nd Year',
+                        classBatch: String(data.classBatch || 'General').trim().toUpperCase(),
+                        department: cleanDept,
+                        createdAt: new Date().toISOString(),
+                      });
+                      fs.writeFileSync(studentsPath, JSON.stringify(students, null, 2), 'utf8');
+                    }
+                  } catch (e) {
+                    console.error('[vite dev api] Student auto-upsert error:', e);
+                  }
+                }
+
                 const entry = {
                   id: `LOG_${Date.now()}`,
                   event: 'ENIGMA 2026',
@@ -156,6 +228,9 @@ function localDevApiPlugin() {
                 return;
               } catch (e) {
                 console.error('[vite dev api] Error in /api/attendance POST:', e);
+                res.statusCode = 400;
+                res.end(JSON.stringify({ error: e.message }));
+                return;
               }
             });
             return;

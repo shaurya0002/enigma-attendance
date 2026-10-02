@@ -13,7 +13,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import { listLogs, listAttendanceCounts } from '../services/api';
+import { listLogs, listAttendanceCounts, listStudents } from '../services/api';
 import { EVENT_TEAMS } from '../config/teams';
 import { filterRoster } from '../data/studentsData';
 
@@ -57,14 +57,15 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
     };
 
     try {
-      const [logsRes, countsRes] = await Promise.all([
+      const [logsRes, countsRes, studentsRes] = await Promise.all([
         listLogs(params),
         listAttendanceCounts(params),
+        listStudents(params),
       ]);
 
       setLoading(false);
 
-      if (logsRes.status === 401 || countsRes.status === 401) {
+      if (logsRes.status === 401 || countsRes.status === 401 || studentsRes.status === 401) {
         return onAuthLost?.();
       }
 
@@ -72,6 +73,14 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
       setLogs(receivedLogs);
 
       const rosterList = filterRoster({ department: selectedDept, search: searchTerm.trim() });
+      if (studentsRes?.ok && Array.isArray(studentsRes.data?.students)) {
+        studentsRes.data.students.forEach((stu) => {
+          if (!rosterList.some((r) => r.rollNumber === stu.rollNumber && r.department === stu.department)) {
+            rosterList.push(stu);
+          }
+        });
+      }
+
       const countsMap = new Map();
       if (countsRes.ok && Array.isArray(countsRes.data?.counts)) {
         countsRes.data.counts.forEach((c) => countsMap.set(c.rollNumber, c));

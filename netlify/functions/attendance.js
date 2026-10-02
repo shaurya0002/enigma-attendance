@@ -181,9 +181,32 @@ export default async (req) => {
         });
       }
 
-      // Always backup to local storage
+      // Always backup log to local storage
       const logs = await readLogs();
       await writeLogs([entry, ...logs]);
+
+      // Always ensure candidate is saved to local student roster for that department
+      try {
+        const currentStudents = await readStudents();
+        const roll = entry.studentDetails.rollNumber;
+        const dept = entry.dutyDepartment.id;
+        const alreadyExists = currentStudents.some((s) => s.rollNumber === roll && s.department === dept);
+        if (!alreadyExists) {
+          const newStu = {
+            id: `STU_${Date.now()}`,
+            name: entry.studentDetails.name,
+            rollNumber: roll,
+            contact: entry.studentDetails.contact || '',
+            year: entry.studentDetails.year,
+            classBatch: entry.studentDetails.classBatch,
+            department: dept,
+            createdAt: new Date().toISOString(),
+          };
+          await writeStudents([newStu, ...currentStudents]);
+        }
+      } catch (err) {
+        console.warn('[attendance] Local student roster auto-add warning:', err.message);
+      }
 
       return json({ entry, storedInMongo: mongoStatus.connected }, 201);
     }

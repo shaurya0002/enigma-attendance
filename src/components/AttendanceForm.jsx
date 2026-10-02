@@ -16,11 +16,12 @@ import {
   BookOpen,
   Search,
   Plus,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
 import { EVENT_TEAMS, ACADEMIC_YEARS, STANDARD_LECTURES } from '../config/teams';
-import { addLog, listStudents } from '../services/api';
-import { filterRoster } from '../data/studentsData';
+import { addLog, listStudents, addStudent } from '../services/api';
+import { filterRoster, registerStudentLocally } from '../data/studentsData';
 
 export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
   // Department Selection State
@@ -34,6 +35,8 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [manualEntryMode, setManualEntryMode] = useState(false);
+  const [isRegisteringStudent, setIsRegisteringStudent] = useState(false);
+  const [manualAddSuccess, setManualAddSuccess] = useState('');
 
   // Student Identity Fields
   const [studentName, setStudentName] = useState('');
@@ -57,7 +60,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
 
   // Fetch candidates from database whenever department or search changes
   const fetchCandidates = useCallback(async (dept, search) => {
-    // 1. Instantly display candidates from embedded roster
+    // 1. Instantly display candidates from embedded roster + localStorage
     const localMatches = filterRoster({ department: dept, search });
     setCandidateList(localMatches);
 
@@ -66,8 +69,12 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     try {
       const res = await listStudents({ department: dept, search });
       if (res.status === 401) return onAuthLost?.();
-      if (res.ok && Array.isArray(res.data?.students) && res.data.students.length > 0) {
-        setCandidateList(res.data.students);
+      if (res.ok && Array.isArray(res.data?.students)) {
+        // Merge server and local roster to prevent overwriting freshly added local candidates
+        const mergedMap = new Map();
+        localMatches.forEach((s) => mergedMap.set(`${s.rollNumber}_${s.department}`, s));
+        res.data.students.forEach((s) => mergedMap.set(`${s.rollNumber}_${s.department}`, s));
+        setCandidateList(Array.from(mergedMap.values()));
       }
     } catch (err) {
       console.warn('[attendance form] API roster fetch failed, using embedded roster:', err);
@@ -96,6 +103,9 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     setStudentName('');
     setRollNumber('');
     setContactNumber('');
+    setManualEntryMode(false);
+    setManualAddSuccess('');
+    setErrors({});
   };
 
   // Select a student from database search results
@@ -107,6 +117,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     setYear(candidate.year || '2nd Year');
     setStudentClass(candidate.classBatch || 'General');
     setErrors((prev) => ({ ...prev, studentName: undefined, rollNumber: undefined }));
+    setManualEntryMode(false);
   };
 
   const handleClearSelectedCandidate = () => {
@@ -114,6 +125,58 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     setStudentName('');
     setRollNumber('');
     setContactNumber('');
+    setManualEntryMode(false);
+    setManualAddSuccess('');
+  };
+
+  // Explicitly register manually entered student into current department roster
+  const handleRegisterManualStudent = async () => {
+    const newErrors = {};
+    if (!studentName.trim()) newErrors.studentName = 'Candidate name is required';
+    if (!rollNumber.trim()) newErrors.rollNumber = 'University roll number is required';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...newErrors }));
+      return;
+    }
+
+    setIsRegisteringStudent(true);
+    setErrors((prev) => ({ ...prev, studentName: undefined, rollNumber: undefined }));
+
+    const cleanRoll = rollNumber.trim().toUpperCase();
+    const candidatePayload = {
+      id: `CUSTOM_${Date.now()}`,
+      name: studentName.trim(),
+      rollNumber: cleanRoll,
+      contact: contactNumber.trim(),
+      year: year || '2nd Year',
+      classBatch: studentClass || 'General',
+      department: selectedTeam,
+    };
+
+    // 1. Save locally to localStorage so it's instantly available in search & offline
+    registerStudentLocally(candidatePayload);
+
+    // 2. Select this candidate immediately so they see the Verified Candidate card
+    handleSelectCandidate(candidatePayload);
+
+    // 3. Update candidateList in current state immediately
+    setCandidateList((prev) => [
+      candidatePayload,
+      ...prev.filter((c) => !(c.rollNumber === cleanRoll && (c.department || selectedTeam) === selectedTeam)),
+    ]);
+
+    // 4. Save to backend database
+    try {
+      await addStudent(candidatePayload);
+    } catch (err) {
+      console.warn('[attendance form] Server student persist notice:', err);
+    } finally {
+      setIsRegisteringStudent(false);
+      setManualEntryMode(false);
+      const deptObj = EVENT_TEAMS.find((t) => t.id === selectedTeam) || EVENT_TEAMS[0];
+      setManualAddSuccess(`${candidatePayload.name} (${cleanRoll}) is now added to ${deptObj.name} roster!`);
+      setTimeout(() => setManualAddSuccess(''), 5000);
+    }
   };
 
   // Toggle lecture selection
@@ -138,6 +201,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     setCustomNote('');
     setErrors({});
     setManualEntryMode(false);
+    setManualAddSuccess('');
   };
 
   const handleSubmit = async (e) => {
@@ -161,10 +225,36 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     setIsSubmitting(true);
     setSubmitError('');
 
+    const cleanRoll = rollNumber.trim().toUpperCase();
+
+    // ALWAYS ensure student is permanently added into this department's roster
+    const candidateData = {
+      id: selectedCandidate?.id || `CUSTOM_${Date.now()}`,
+      name: studentName.trim(),
+      rollNumber: cleanRoll,
+      contact: contactNumber.trim(),
+      year: year || '2nd Year',
+      classBatch: studentClass || 'General',
+      department: selectedTeam,
+    };
+
+    registerStudentLocally(candidateData);
+    addStudent(candidateData).catch((err) =>
+      console.warn('[attendance form] Sync student roster warning:', err)
+    );
+
+    // Update candidate list in state so they are permanently visible in that department
+    setCandidateList((prev) => {
+      const filtered = prev.filter(
+        (c) => !(c.rollNumber === cleanRoll && (c.department || selectedTeam) === selectedTeam)
+      );
+      return [candidateData, ...filtered];
+    });
+
     const res = await addLog({
-      name: studentName,
-      rollNumber,
-      contact: contactNumber,
+      name: studentName.trim(),
+      rollNumber: cleanRoll,
+      contact: contactNumber.trim(),
       year,
       classBatch: studentClass,
       teamId: selectedTeam,
@@ -383,6 +473,14 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
               )}
             </div>
 
+            {/* Success notification banner if added */}
+            {manualAddSuccess && (
+              <div className="p-3 my-2.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs flex items-center gap-2 animate-fadeIn font-sans shadow-sm">
+                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>{manualAddSuccess}</span>
+              </div>
+            )}
+
             {/* Fallback Manual Toggle */}
             <div className="mt-2 pt-2 border-t border-stone-200 flex items-center justify-between text-xs">
               <span className="text-stone-500 font-serif italic">Candidate not in roster?</span>
@@ -397,54 +495,106 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
 
             {/* Collapsible Manual Fields */}
             {manualEntryMode && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 p-3 bg-stone-50 rounded-xl border border-stone-200 animate-fadeIn">
-                <div>
-                  <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">Student Name</label>
-                  <input
-                    type="text"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                    placeholder="Full Name"
-                    className="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-lg text-xs"
-                  />
+              <div className="mt-3 p-4 bg-[#fdfbf7] rounded-xl border border-[#a51c30]/25 space-y-3.5 animate-fadeIn shadow-sm">
+                <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+                  <div className="flex items-center gap-1.5 text-xs font-serif font-bold text-[#a51c30] uppercase tracking-wider">
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Add New Candidate to {currentDeptObj.name}</span>
+                  </div>
+                  <span className="text-[10.5px] text-stone-500 font-serif italic">Permanent department roster entry</span>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">Roll Number</label>
-                  <input
-                    type="text"
-                    value={rollNumber}
-                    onChange={(e) => setRollNumber(e.target.value)}
-                    placeholder="Roll Number"
-                    className="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-lg text-xs font-mono"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">
+                      Student Name <span className="text-[#a51c30]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                      placeholder="Full Name (e.g. John Doe)"
+                      className="w-full px-3 py-1.5 bg-white border border-stone-300 focus:border-[#a51c30] rounded-lg text-xs text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#a51c30]"
+                    />
+                    {errors.studentName && <p className="text-[10px] text-rose-600 mt-1 font-sans">{errors.studentName}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">
+                      University Roll Number <span className="text-[#a51c30]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={rollNumber}
+                      onChange={(e) => setRollNumber(e.target.value)}
+                      placeholder="Roll Number (e.g. 2500100100999)"
+                      className="w-full px-3 py-1.5 bg-white border border-stone-300 focus:border-[#a51c30] rounded-lg text-xs font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#a51c30]"
+                    />
+                    {errors.rollNumber && <p className="text-[10px] text-rose-600 mt-1 font-sans">{errors.rollNumber}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">
+                      Contact Number (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={contactNumber}
+                      onChange={(e) => setContactNumber(e.target.value)}
+                      placeholder="10-digit phone number"
+                      className="w-full px-3 py-1.5 bg-white border border-stone-300 focus:border-[#a51c30] rounded-lg text-xs font-mono text-stone-900 focus:outline-none focus:ring-1 focus:ring-[#a51c30]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">
+                      Academic Year
+                    </label>
+                    <select
+                      value={year}
+                      onChange={(e) => setYear(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white border border-stone-300 focus:border-[#a51c30] rounded-lg text-xs text-stone-900 focus:outline-none"
+                    >
+                      {ACADEMIC_YEARS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">Contact Number</label>
-                  <input
-                    type="text"
-                    value={contactNumber}
-                    onChange={(e) => setContactNumber(e.target.value)}
-                    placeholder="Phone"
-                    className="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-lg text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-serif font-bold text-stone-700 mb-1">Year</label>
-                  <select
-                    value={year}
-                    onChange={(e) => setYear(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-white border border-stone-300 rounded-lg text-xs"
+
+                <div className="pt-2 border-t border-stone-200/80 flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setManualEntryMode(false);
+                      setStudentName('');
+                      setRollNumber('');
+                      setContactNumber('');
+                      setErrors((prev) => ({ ...prev, studentName: undefined, rollNumber: undefined }));
+                    }}
+                    className="px-3 py-1.5 rounded-lg border border-stone-300 bg-white hover:bg-stone-100 text-stone-600 font-serif text-xs cursor-pointer transition-colors"
                   >
-                    {ACADEMIC_YEARS.map((y) => (
-                      <option key={y} value={y}>{y}</option>
-                    ))}
-                  </select>
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleRegisterManualStudent}
+                    disabled={isRegisteringStudent}
+                    className="px-4 py-2 rounded-lg bg-[#a51c30] hover:bg-[#7f1322] border border-[#c59b27]/40 text-white font-serif font-bold text-xs tracking-wider uppercase shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                  >
+                    {isRegisteringStudent ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Adding to Roster...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-3.5 h-3.5 text-[#f5e6be]" />
+                        <span>Add Candidate to {currentDeptObj.name} Roster</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
-
-            {errors.studentName && <p className="text-xs text-rose-600 mt-2 font-sans">{errors.studentName}</p>}
-            {errors.rollNumber && <p className="text-xs text-rose-600 mt-1 font-sans">{errors.rollNumber}</p>}
           </div>
         )}
       </div>
