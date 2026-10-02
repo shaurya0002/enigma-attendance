@@ -20,8 +20,8 @@ function getClientPromise() {
   if (!global._mongoClientPromise) {
     client = new MongoClient(uri, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 4000,
-      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 1500,
+      connectTimeoutMS: 2000,
     });
     global._mongoClientPromise = client.connect();
   }
@@ -33,13 +33,23 @@ export async function getDb() {
   return c.db(dbName);
 }
 
+let lastConnectionCheck = { time: 0, status: null };
+
 export async function checkMongoConnection() {
+  const now = Date.now();
+  if (lastConnectionCheck.status && now - lastConnectionCheck.time < 10000) {
+    return lastConnectionCheck.status;
+  }
   try {
     const db = await getDb();
     await db.command({ ping: 1 });
-    return { connected: true, dbName };
+    const res = { connected: true, dbName };
+    lastConnectionCheck = { time: now, status: res };
+    return res;
   } catch (err) {
-    return { connected: false, error: err.message };
+    const res = { connected: false, error: err.message };
+    lastConnectionCheck = { time: now, status: res };
+    return res;
   }
 }
 

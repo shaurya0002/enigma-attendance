@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { listLogs, listAttendanceCounts } from '../services/api';
 import { EVENT_TEAMS } from '../config/teams';
+import { filterRoster } from '../data/studentsData';
 
 export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'all_logs'
@@ -23,7 +24,19 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
   const [expandedStudents, setExpandedStudents] = useState({});
 
   const [logs, setLogs] = useState([]);
-  const [counts, setCounts] = useState([]);
+  const [counts, setCounts] = useState(() =>
+    filterRoster({ department: 'all', search: '' }).map((s) => ({
+      rollNumber: s.rollNumber,
+      name: s.name,
+      contact: s.contact,
+      department: s.department,
+      year: s.year,
+      classBatch: s.classBatch,
+      totalDaysAttended: 0,
+      totalLecturesSkipped: 0,
+      dutyDates: [],
+    }))
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -55,12 +68,40 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
         return onAuthLost?.();
       }
 
-      if (logsRes.ok) {
-        setLogs(Array.isArray(logsRes.data?.logs) ? logsRes.data.logs : []);
+      const receivedLogs = logsRes.ok && Array.isArray(logsRes.data?.logs) ? logsRes.data.logs : [];
+      setLogs(receivedLogs);
+
+      const rosterList = filterRoster({ department: selectedDept, search: searchTerm.trim() });
+      const countsMap = new Map();
+      if (countsRes.ok && Array.isArray(countsRes.data?.counts)) {
+        countsRes.data.counts.forEach((c) => countsMap.set(c.rollNumber, c));
       }
-      if (countsRes.ok) {
-        setCounts(Array.isArray(countsRes.data?.counts) ? countsRes.data.counts : []);
-      }
+
+      // Combine roster with live counts
+      const combined = rosterList.map((s) => {
+        const recorded = countsMap.get(s.rollNumber);
+        if (recorded) return recorded;
+        return {
+          rollNumber: s.rollNumber,
+          name: s.name,
+          contact: s.contact,
+          department: s.department,
+          year: s.year,
+          classBatch: s.classBatch,
+          totalDaysAttended: 0,
+          totalLecturesSkipped: 0,
+          dutyDates: [],
+        };
+      });
+
+      // Also append any recorded students not in roster
+      countsMap.forEach((val, key) => {
+        if (!rosterList.some((r) => r.rollNumber === key)) {
+          combined.push(val);
+        }
+      });
+
+      setCounts(combined);
     } catch (err) {
       setLoading(false);
       setError(err.message || 'Failed to query records');

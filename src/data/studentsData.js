@@ -1,0 +1,132 @@
+/**
+ * ENIGMA 2026 - Master Student Roster by Department
+ * Embedded dataset for instant frontend search, filtering, and offline resilience.
+ */
+export const STUDENTS_ROSTER = [
+  {"id":"STU_1","name":"Aryan Mishra","rollNumber":"2500100100149","contact":"9454917472","year":"2nd Year","classBatch":"General","department":"promotion"},
+  {"id":"STU_2","name":"Ananiya Shukla","rollNumber":"2500101530027","contact":"9198046848","year":"2nd Year","classBatch":"General","department":"promotion"},
+  {"id":"STU_3","name":"Anushka Singh","rollNumber":"2500101530042","contact":"9415989416","year":"2nd Year","classBatch":"General","department":"promotion"},
+  {"id":"STU_4","name":"Gaurav Kumar","rollNumber":"2500101530074","contact":"7052961980","year":"2nd Year","classBatch":"General","department":"promotion"},
+  {"id":"STU_5","name":"Shreyansh Vaibhav","rollNumber":"2500100400046","contact":"8382013444","year":"2nd Year","classBatch":"General","department":"promotion"},
+  {"id":"STU_6","name":"Samyak Jain","rollNumber":"2500100100433","contact":"9532081591","year":"2nd Year","classBatch":"General","department":"promotion"},
+  {"id":"STU_7","name":"Akshara Srivastava","rollNumber":"2500101530018","contact":"9935652320","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_8","name":"Sonal Upadhyay","rollNumber":"2500100310053","contact":"8528270203","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_9","name":"Aniket Kushwaha","rollNumber":"2500100100087","contact":"9415753741","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_10","name":"Shreyansh Vaibhav","rollNumber":"2500100400046","contact":"8382013444","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_11","name":"Advika Mishra","rollNumber":"2500101530011","contact":"9451590823","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_12","name":"Swarnim Mishra","rollNumber":"2500101530187","contact":"9214561400","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_13","name":"Ayush Mishra","rollNumber":"2500100100190","contact":"7905787221","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_14","name":"Aditya Sharma","rollNumber":"2500100400005","contact":"7703938662","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_15","name":"Vashitva Pathak","rollNumber":"2500101530197","contact":"9336752841","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_16","name":"Anushka Shrivastava","rollNumber":"2500101530043","contact":"8368207256","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_17","name":"Kailash Singh","rollNumber":"2500101530094","contact":"8005271557","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_18","name":"Shweta Pandey","rollNumber":"2500100100509","contact":"9214723030","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_19","name":"Shivang Kesarwani","rollNumber":"2500100400044","contact":"6306441084","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_20","name":"Anamta Rizvi","rollNumber":"2500100100077","contact":"8957356699","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_21","name":"Aman Mishra","rollNumber":"2500101530025","contact":"9060272752","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_22","name":"Satakshi Srivastava","rollNumber":"2500100100448","contact":"9236486144","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_23","name":"Anupam Singh","rollNumber":"2500101530037","contact":"7084664081","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_24","name":"Naqeeba Irshad","rollNumber":"2500100100328","contact":"8470930105","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_25","name":"Shahbaaz Ahmad","rollNumber":"2500100100461","contact":"8726506196","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_26","name":"Anushka Sinha","rollNumber":"2500100100120","contact":"7307843659","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_27","name":"Azhaan Alam","rollNumber":"2500101530061","contact":"7355686302","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_28","name":"Shlok Tiwari","rollNumber":"2400100310055","contact":"7068601183","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_29","name":"Suyash Mishra","rollNumber":"2500101530185","contact":"9452495341","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_30","name":"Utkarsh Tripathi","rollNumber":"2500100100565","contact":"8707267499","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_31","name":"Shlok","rollNumber":"2500101530174","contact":"9250001622","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_32","name":"Anshuman Mishra","rollNumber":"2500100100102","contact":"9214562634","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_33","name":"Vivek Kumar","rollNumber":"2500100100594","contact":"9026592551","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_34","name":"Sanskar Kumar","rollNumber":"2500101530161","contact":"9305295802","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_35","name":"Kritika Vishwakarma","rollNumber":"2500101530100","contact":"9555986776","year":"2nd Year","classBatch":"General","department":"activity"},
+  {"id":"STU_36","name":"Om Tripathi","rollNumber":"2500100100339","contact":"9236528466","year":"2nd Year","classBatch":"General","department":"design"},
+  {"id":"STU_37","name":"Mayank Shukla","rollNumber":"2500101530104","contact":"7376319458","year":"2nd Year","classBatch":"General","department":"design"},
+  {"id":"STU_38","name":"Shivanshu Singh","rollNumber":"2500100100491","contact":"8858088620","year":"2nd Year","classBatch":"General","department":"design"},
+  {"id":"STU_39","name":"Adarsh Dwivedi","rollNumber":"2500100100021","contact":"8576077425","year":"2nd Year","classBatch":"General","department":"design"},
+  {"id":"STU_40","name":"Yashraj Singh","rollNumber":"2500100100607","contact":"9219611543","year":"2nd Year","classBatch":"General","department":"media"},
+  {"id":"STU_41","name":"Utkarsh Kesarwani","rollNumber":"2500100100560","contact":"7355020107","year":"2nd Year","classBatch":"General","department":"media"},
+  {"id":"STU_42","name":"Rudraaksh Chaturvedi","rollNumber":"2500100100416","contact":"9580852355","year":"2nd Year","classBatch":"General","department":"media"},
+  {"id":"STU_43","name":"Aditi Singh","rollNumber":"2500101530006","contact":"9335934207","year":"2nd Year","classBatch":"General","department":"media"},
+  {"id":"STU_44","name":"Anuj","rollNumber":"2500100100109","contact":"9519315664","year":"2nd Year","classBatch":"General","department":"media"},
+  {"id":"STU_45","name":"Nishant Pratap Singh","rollNumber":"2500100100333","contact":"7080736571","year":"2nd Year","classBatch":"General","department":"media"},
+  {"id":"STU_46","name":"Arohi Singh","rollNumber":"2500100100130","contact":"9696775391","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_47","name":"SHRUTI SINGH","rollNumber":"2500101530181","contact":"8303671646","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_48","name":"ADITYA KUMAR","rollNumber":"2500100200003","contact":"9120888401","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_49","name":"Vaishnavi Srivastava","rollNumber":"2500100100578","contact":"9305540171","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_50","name":"Pratham Agarwal","rollNumber":"2500100100361","contact":"9336996230","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_51","name":"Adiba javed","rollNumber":"2500100100028","contact":"9219361551","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_52","name":"Ayan Ahmad","rollNumber":"2500100100181","contact":"7398430329","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_53","name":"Muskan Gupta","rollNumber":"2500100100322","contact":"9238018602","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_54","name":"Anshul Dwivedi","rollNumber":"2500100100101","contact":"9335116086","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_55","name":"Yahya Ansari","rollNumber":"2500100100599","contact":"8840449721","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_56","name":"IFRA SIDDIQUI","rollNumber":"2500100100253","contact":"9140042156","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_57","name":"Kritika singh","rollNumber":"2500101530099","contact":"9721025713","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_58","name":"Zoya Siddiqui","rollNumber":"2500100100611","contact":"9555331908","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_59","name":"Arushi Kesarwani","rollNumber":"2500100100141","contact":"9580467820","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_60","name":"Sudheer Maurya","rollNumber":"2500100100527","contact":"8604990498","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_61","name":"Akshara pandey","rollNumber":"2500101530017","contact":"6387165559","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_62","name":"ALANKRITA TIWARI","rollNumber":"2500100100058","contact":"9452790756","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_63","name":"Tanmay Agrawal","rollNumber":"2500100100547","contact":"7380990453","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_64","name":"Aishwar mittal","rollNumber":"2500101530013","contact":"9580463211","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_65","name":"Mansi Srivastava","rollNumber":"2500100100293","contact":"7376748598","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_66","name":"Aradhya Shukla","rollNumber":"2500101530047","contact":"8960675687","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_67","name":"Tasmiya Fatima","rollNumber":"2500100100550","contact":"9305301523","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_68","name":"Sanidhya Singh","rollNumber":"2500101530160","contact":"8808510821","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_69","name":"Nishchay Jaiswal","rollNumber":"2500100100334","contact":"9580980864","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_70","name":"Anushka sinha","rollNumber":"2500100100120","contact":"7307843659","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_71","name":"Manali","rollNumber":"2500100310032","contact":"9026402371","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_72","name":"Diksha Shukla","rollNumber":"2500100100212","contact":"8080884068","year":"2nd Year","classBatch":"General","department":"decor"},
+  {"id":"STU_73","name":"Yash Sharma","rollNumber":"2500100100603","contact":"6307281332","year":"2nd Year","classBatch":"General","department":"technical"},
+  {"id":"STU_74","name":"Prashant Yadav","rollNumber":"2500100100357","contact":"6386423222","year":"2nd Year","classBatch":"General","department":"technical"},
+  {"id":"STU_75","name":"Shaurya Pandey","rollNumber":"2500100100470","contact":"6306009672","year":"2nd Year","classBatch":"General","department":"technical"},
+  {"id":"STU_76","name":"Siddharth Singh","rollNumber":"2400100100486","contact":"7052080561","year":"3rd Year","classBatch":"General","department":"technical"},
+  {"id":"STU_77","name":"Jaishiv Tiwari","rollNumber":"2400100100234","contact":"9580955057","year":"3rd Year","classBatch":"General","department":"technical"},
+  {"id":"STU_78","name":"Anjali Singh","rollNumber":"2500100100090","contact":"7355080219","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_79","name":"Sneha Gaur","rollNumber":"2500100400049","contact":"9555902963","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_80","name":"Aditi Gupta","rollNumber":"2400100100021","contact":"7408225751","year":"3rd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_81","name":"Arushi Kesarwani","rollNumber":"2500100100141","contact":"9580467820","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_82","name":"Soni Yadav","rollNumber":"2500100100521","contact":"7392941391","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_83","name":"Richa Pal","rollNumber":"2503150500073","contact":"6394189482","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_84","name":"Vaibhavi Gupta","rollNumber":"2503150500112","contact":"9208545907","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_85","name":"Rupali Kotarya","rollNumber":"2503150500076","contact":"8081777304","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_86","name":"Mansi Kesharwani","rollNumber":"2500100100292","contact":"8081748938","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_87","name":"Rashika Yadav","rollNumber":"2500100100400","contact":"9721743639","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_88","name":"Purnima Tripathi","rollNumber":"2503150500067","contact":"8382914440","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_89","name":"Shruti Singh","rollNumber":"2400100310057","contact":"8795592969","year":"3rd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_90","name":"Jahnavi Kesharwani","rollNumber":"2500100200256","contact":"9235662584","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_91","name":"Keshav Mishra","rollNumber":"2500100100268","contact":"7887217431","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_92","name":"Somya Pandey","rollNumber":"2500100100519","contact":"8467060895","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_93","name":"Anushka Srivastava","rollNumber":"2500101530043","contact":"8368207256","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_94","name":"Srishti Upadhyay","rollNumber":"2300100310068","contact":"8429214403","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_95","name":"Anushka Singh","rollNumber":"2500101530042","contact":"9415989416","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_96","name":"Sonal Upadhyay","rollNumber":"2500100310053","contact":"8528270203","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_97","name":"Kushagra Singh","rollNumber":"2500101530101","contact":"9335210969","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_98","name":"Kritika Vishwakarma","rollNumber":"2500101530100","contact":"9555986776","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_99","name":"Muskan Gupta","rollNumber":"2500100100322","contact":"9238018602","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_100","name":"Arti Dwivedi","rollNumber":"2400100100113","contact":"6307897941","year":"3rd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_101","name":"Satyam Pal","rollNumber":"2500100100452","contact":"8840379057","year":"2nd Year","classBatch":"General","department":"flashmob"},
+  {"id":"STU_102","name":"Navneet Prajapati","rollNumber":"2500100000013","contact":"9682731289","year":"2nd Year","classBatch":"General","department":"flashmob"}
+];
+
+/**
+ * Synchronous client-side filter helper for zero-latency UI searching.
+ */
+export function filterRoster({ department, search, year }) {
+  return STUDENTS_ROSTER.filter((s) => {
+    if (department && department !== 'all' && s.department !== department) {
+      return false;
+    }
+    if (year && year !== 'all' && s.year !== year) {
+      return false;
+    }
+    if (search && search.trim()) {
+      const q = search.trim().toLowerCase();
+      const name = (s.name || '').toLowerCase();
+      const roll = (s.rollNumber || '').toLowerCase();
+      const contact = (s.contact || '').toLowerCase();
+      if (!name.includes(q) && !roll.includes(q) && !contact.includes(q)) {
+        return false;
+      }
+    }
+    return true;
+  });
+}

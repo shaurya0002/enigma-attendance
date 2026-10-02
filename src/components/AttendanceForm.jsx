@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { EVENT_TEAMS, ACADEMIC_YEARS, STANDARD_LECTURES } from '../config/teams';
 import { addLog, listStudents } from '../services/api';
+import { filterRoster } from '../data/studentsData';
 
 export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
   // Department Selection State
@@ -27,7 +28,9 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
 
   // Student Candidates & Search Filtration State
   const [candidateSearch, setCandidateSearch] = useState('');
-  const [candidateList, setCandidateList] = useState([]);
+  const [candidateList, setCandidateList] = useState(() => 
+    filterRoster({ department: EVENT_TEAMS[0].id, search: '' })
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [manualEntryMode, setManualEntryMode] = useState(false);
@@ -54,14 +57,22 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
 
   // Fetch candidates from database whenever department or search changes
   const fetchCandidates = useCallback(async (dept, search) => {
+    // 1. Instantly display candidates from embedded roster
+    const localMatches = filterRoster({ department: dept, search });
+    setCandidateList(localMatches);
+
+    // 2. Query backend API for live database candidates (merged / refreshed)
     setIsSearching(true);
-    const res = await listStudents({ department: dept, search });
-    setIsSearching(false);
-    if (res.status === 401) return onAuthLost?.();
-    if (res.ok && Array.isArray(res.data?.students)) {
-      setCandidateList(res.data.students);
-    } else {
-      setCandidateList([]);
+    try {
+      const res = await listStudents({ department: dept, search });
+      if (res.status === 401) return onAuthLost?.();
+      if (res.ok && Array.isArray(res.data?.students) && res.data.students.length > 0) {
+        setCandidateList(res.data.students);
+      }
+    } catch (err) {
+      console.warn('[attendance form] API roster fetch failed, using embedded roster:', err);
+    } finally {
+      setIsSearching(false);
     }
   }, [onAuthLost]);
 
@@ -76,11 +87,12 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
     };
   }, [selectedTeam, candidateSearch, fetchCandidates]);
 
-  // When department switches, reset candidate selection
+  // When department switches, reset candidate selection and show new dept candidates
   const handleDepartmentChange = (deptId) => {
     setSelectedTeam(deptId);
     setSelectedCandidate(null);
     setCandidateSearch('');
+    setCandidateList(filterRoster({ department: deptId, search: '' }));
     setStudentName('');
     setRollNumber('');
     setContactNumber('');

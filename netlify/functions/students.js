@@ -5,11 +5,6 @@ import { EVENT_TEAMS, ACADEMIC_YEARS } from '../../src/config/teams.js';
 
 export default async (req) => {
   const cfg = getConfig();
-  if (!cfg) return json({ error: 'Server not configured' }, 500);
-
-  const admin = getAdmin(req, cfg);
-  if (!admin) return json({ error: 'Unauthorized' }, 401);
-
   const url = new URL(req.url, 'http://localhost');
   const searchParams = url.searchParams;
 
@@ -37,6 +32,8 @@ export default async (req) => {
     // POST /api/students: Department admin enters student credentials
     // -------------------------------------------------------------
     if (req.method === 'POST') {
+      const admin = cfg ? getAdmin(req, cfg) : null;
+      if (!admin) return json({ error: 'Unauthorized' }, 401);
       if (!isSafePost(req)) return json({ error: 'Bad request' }, 400);
       const { data, tooLarge } = await readJson(req, 8000);
       if (tooLarge) return json({ error: 'Payload too large' }, 413);
