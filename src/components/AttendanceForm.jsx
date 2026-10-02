@@ -120,7 +120,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
                 type="text"
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
-                placeholder="e.g. Alexander Mercer"
+                placeholder=""
                 className={`w-full pl-10 pr-4 py-2.5 bg-[#faf9f6] border ${errors.studentName ? 'border-rose-500' : 'border-stone-300 focus:border-[#a51c30]'} rounded-xl text-stone-900 placeholder-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#a51c30]/20 transition-all font-sans`}
               />
             </div>
@@ -140,7 +140,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
                 type="text"
                 value={rollNumber}
                 onChange={(e) => setRollNumber(e.target.value)}
-                placeholder="e.g. 2100520100089"
+                placeholder=""
                 className={`w-full pl-10 pr-4 py-2.5 bg-[#faf9f6] border ${errors.rollNumber ? 'border-rose-500' : 'border-stone-300 focus:border-[#a51c30]'} rounded-xl text-stone-900 placeholder-stone-400 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#a51c30]/20 transition-all`}
               />
             </div>
@@ -186,7 +186,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost }) {
                 type="text"
                 value={studentClass}
                 onChange={(e) => setStudentClass(e.target.value)}
-                placeholder="e.g. B1, B2, CS-A"
+                placeholder=""
                 className={`w-full pl-10 pr-4 py-2 bg-[#faf9f6] border ${errors.studentClass ? 'border-rose-500' : 'border-stone-300 focus:border-[#a51c30]'} rounded-xl text-stone-900 placeholder-stone-400 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#a51c30]/20 transition-all`}
               />
             </div>
