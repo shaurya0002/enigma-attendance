@@ -1,17 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, RefreshCw, Search, Calendar, AlertCircle, Loader2, Award, Clock, CheckCircle } from 'lucide-react';
+import { 
+  X, 
+  RefreshCw, 
+  Search, 
+  Calendar, 
+  AlertCircle, 
+  Loader2, 
+  Award, 
+  Clock, 
+  CheckCircle,
+  Phone,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
 import { listLogs, listAttendanceCounts } from '../services/api';
 import { EVENT_TEAMS } from '../config/teams';
 
 export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
-  const [activeTab, setActiveTab] = useState('logs'); // 'logs' or 'counts'
+  const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'all_logs'
   const [selectedDept, setSelectedDept] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedStudents, setExpandedStudents] = useState({});
 
   const [logs, setLogs] = useState([]);
   const [counts, setCounts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const toggleStudentExpanded = (roll) => {
+    setExpandedStudents((prev) => ({
+      ...prev,
+      [roll]: !prev[roll],
+    }));
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -22,26 +43,29 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
       search: searchTerm.trim(),
     };
 
-    if (activeTab === 'counts') {
-      const res = await listAttendanceCounts(params);
+    try {
+      const [logsRes, countsRes] = await Promise.all([
+        listLogs(params),
+        listAttendanceCounts(params),
+      ]);
+
       setLoading(false);
-      if (res.status === 401) return onAuthLost?.();
-      if (res.ok) {
-        setCounts(Array.isArray(res.data?.counts) ? res.data.counts : []);
-      } else {
-        setError(res.data?.error || 'Failed to load attendance counts');
+
+      if (logsRes.status === 401 || countsRes.status === 401) {
+        return onAuthLost?.();
       }
-    } else {
-      const res = await listLogs(params);
+
+      if (logsRes.ok) {
+        setLogs(Array.isArray(logsRes.data?.logs) ? logsRes.data.logs : []);
+      }
+      if (countsRes.ok) {
+        setCounts(Array.isArray(countsRes.data?.counts) ? countsRes.data.counts : []);
+      }
+    } catch (err) {
       setLoading(false);
-      if (res.status === 401) return onAuthLost?.();
-      if (res.ok) {
-        setLogs(Array.isArray(res.data?.logs) ? res.data.logs : []);
-      } else {
-        setError(res.data?.error || 'Failed to load records');
-      }
+      setError(err.message || 'Failed to query records');
     }
-  }, [activeTab, selectedDept, searchTerm, onAuthLost]);
+  }, [selectedDept, searchTerm, onAuthLost]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -74,7 +98,7 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
               <h3 className="text-xl font-serif font-bold text-stone-900 flex items-center gap-2">
                 Official Attendance Ledger
                 <span className="px-2 py-0.5 rounded text-xs bg-[#a51c30]/10 border border-[#a51c30]/20 text-[#a51c30] font-sans font-bold">
-                  {activeTab === 'counts' ? `${counts.length} Students Tracked` : `${logs.length} Entries Logged`}
+                  {counts.length} Students · {logs.length} Total Logs
                 </span>
               </h3>
               <p className="text-xs text-stone-500 font-serif italic">Official Registry · ENIGMA 2026</p>
@@ -99,39 +123,39 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
           </div>
         </div>
 
-        {/* Navigation Tabs & Department Filter Controls */}
+        {/* Navigation Tabs & Department Filtration Controls */}
         <div className="pt-3 pb-2 space-y-3">
-          {/* View Tab Selector: Daily Logs vs All-Days Cumulative Count */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
+            {/* View Selector */}
             <div className="flex items-center gap-2 bg-[#faf9f6] p-1 rounded-xl border border-stone-200">
               <button
-                onClick={() => setActiveTab('logs')}
+                onClick={() => setActiveTab('summary')}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'logs'
-                    ? 'bg-[#a51c30] text-white shadow-sm'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Daily Duty Logs</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('counts')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'counts'
+                  activeTab === 'summary'
                     ? 'bg-[#a51c30] text-white shadow-sm'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 <Award className="w-3.5 h-3.5 text-[#f5e6be]" />
-                <span>Attendance Count (All Days)</span>
+                <span>Student Summary & Days Log</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('all_logs')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'all_logs'
+                    ? 'bg-[#a51c30] text-white shadow-sm'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Chronological Log Stream</span>
               </button>
             </div>
 
-            {/* Department Dropdown Selector */}
+            {/* Department Selector */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-serif font-bold text-stone-500 uppercase tracking-wider">Dept:</span>
+              <span className="text-[11px] font-serif font-bold text-stone-500 uppercase tracking-wider">Department:</span>
               <select
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
@@ -147,14 +171,14 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar matching Name, Roll Number, or Contact */}
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by student name, roll number, or class batch..."
+              placeholder="Search by student identity: Name, Contact number, or University Roll Number..."
               className="w-full pl-10 pr-4 py-2 bg-[#faf9f6] border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 text-xs focus:outline-none focus:border-[#a51c30] font-sans"
             />
           </div>
@@ -164,7 +188,7 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
         {loading && (
           <div className="py-16 text-center text-stone-600 flex flex-col items-center justify-center gap-2">
             <Loader2 className="w-8 h-8 text-[#a51c30] animate-spin" />
-            <span className="text-sm font-serif italic">Querying database...</span>
+            <span className="text-sm font-serif italic">Loading ledger records from database...</span>
           </div>
         )}
 
@@ -173,17 +197,165 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
             <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
             <div>
               <p className="font-semibold">Unable to fetch records: {error}</p>
-              <p className="text-[11px] text-rose-600/80 mt-0.5">Please check system configuration or try refreshing.</p>
+              <p className="text-[11px] text-rose-600/80 mt-0.5">Please check connection or try refreshing.</p>
             </div>
           </div>
         )}
 
-        {/* TAB 1: DAILY DUTY LOGS */}
-        {!loading && !error && activeTab === 'logs' && (
+        {/* VIEW 1: STUDENT SUMMARY & ALL-DAYS LOG */}
+        {!loading && !error && activeTab === 'summary' && (
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 mt-2">
+            {counts.length === 0 ? (
+              <div className="py-16 text-center text-stone-500 font-serif italic text-xs">
+                No student attendance records found matching this department or query.
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                {counts.map((student, idx) => {
+                  const roll = student.rollNumber;
+                  const isExpanded = !!expandedStudents[roll];
+                  const studentLogs = logs.filter(
+                    (l) => l.studentDetails?.rollNumber === roll
+                  );
+
+                  const totalDays = student.totalDaysAttended || (student.dutyDates ? student.dutyDates.length : 0);
+                  const totalLectures = student.totalLecturesSkipped || 0;
+                  // Standard academic schedule typically has 8 periods per day
+                  const maxExpectedPeriods = totalDays * 8;
+                  const classesRemainingAttended = Math.max(0, maxExpectedPeriods - totalLectures);
+
+                  return (
+                    <div
+                      key={student._id || roll || idx}
+                      className="p-4 rounded-2xl bg-[#faf9f6] border border-stone-200 hover:border-[#a51c30]/50 transition-all text-xs"
+                    >
+                      {/* Student Identity Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200">
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif font-bold text-stone-900 text-base">
+                            {student.name}
+                          </span>
+                          <span className="font-mono text-[#a51c30] bg-[#a51c30]/10 border border-[#a51c30]/20 px-2 py-0.5 rounded text-[11px] font-bold">
+                            {roll}
+                          </span>
+                          {student.contact && (
+                            <span className="font-mono text-stone-600 bg-white border border-stone-200 px-2 py-0.5 rounded text-[11px] flex items-center gap-1">
+                              <Phone className="w-3 h-3 text-stone-400" />
+                              {student.contact}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#a51c30] text-white uppercase">
+                            {student.department}
+                          </span>
+                        </div>
+
+                        {/* Expand / Collapse All-Days Breakdown Button */}
+                        <button
+                          type="button"
+                          onClick={() => toggleStudentExpanded(roll)}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-stone-300 text-stone-700 hover:text-[#a51c30] hover:border-[#a51c30] text-xs font-serif font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <span>{isExpanded ? 'Hide Days Log' : `View All Days Log (${studentLogs.length})`}</span>
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+
+                      {/* Summary Metrics Cards */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3">
+                        <div className="p-2.5 rounded-xl bg-white border border-stone-200">
+                          <span className="text-[10px] font-serif font-bold text-stone-500 uppercase block">Total Duty Days</span>
+                          <span className="text-sm font-serif font-bold text-emerald-700 flex items-center gap-1">
+                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            {totalDays} {totalDays === 1 ? 'Day' : 'Days'}
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-white border border-stone-200">
+                          <span className="text-[10px] font-serif font-bold text-stone-500 uppercase block">Total Lectures Added</span>
+                          <span className="text-sm font-serif font-bold text-[#a51c30] flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5" />
+                            {totalLectures} Periods
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-white border border-stone-200">
+                          <span className="text-[10px] font-serif font-bold text-stone-500 uppercase block">Regular Classes Attended</span>
+                          <span className="text-sm font-serif font-bold text-stone-800">
+                            ~{classesRemainingAttended} Classes
+                          </span>
+                        </div>
+
+                        <div className="p-2.5 rounded-xl bg-white border border-stone-200">
+                          <span className="text-[10px] font-serif font-bold text-stone-500 uppercase block">Dates of Duty</span>
+                          <span className="text-[11px] font-mono text-stone-600 truncate block" title={student.dutyDates?.join(', ')}>
+                            {student.dutyDates && student.dutyDates.length > 0 ? student.dutyDates.join(', ') : 'None logged'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Expandable Breakdown: Log of all the days */}
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-stone-200 animate-fadeIn">
+                          <h5 className="font-serif font-bold text-stone-900 text-xs mb-2 flex items-center gap-1.5 uppercase tracking-wider">
+                            <Calendar className="w-3.5 h-3.5 text-[#a51c30]" />
+                            Day-by-Day Duty Attendance History
+                          </h5>
+
+                          {studentLogs.length === 0 ? (
+                            <p className="text-xs text-stone-500 font-serif italic py-2">
+                              No granular daily records found for this student.
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {studentLogs.map((item, logIdx) => (
+                                <div
+                                  key={item.id || item._id || logIdx}
+                                  className="p-3 rounded-xl bg-white border border-stone-200 flex flex-wrap items-center justify-between gap-2"
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-bold text-stone-900 font-serif">
+                                        Date: {item.attendanceLog?.date}
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10.5px] font-bold">
+                                        {item.attendanceLog?.totalLecturesSkipped} Lectures Missed/Credited
+                                      </span>
+                                      {item.attendanceLog?.extraAttendance > 0 && (
+                                        <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                          +{item.attendanceLog?.extraAttendance} Extra
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-stone-600 font-sans mt-0.5">
+                                      Periods: {item.attendanceLog?.skippedLectureNumbers?.map((n) => `L${n}`).join(', ') || 'N/A'}
+                                      {item.attendanceLog?.remarks ? ` · Note: "${item.attendanceLog.remarks}"` : ''}
+                                    </div>
+                                  </div>
+
+                                  <span className="text-[10px] text-stone-400 font-serif">
+                                    Logged by: <strong>{item.loggedBy || 'admin'}</strong>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* VIEW 2: MASTER CHRONOLOGICAL LOG STREAM */}
+        {!loading && !error && activeTab === 'all_logs' && (
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 mt-2">
             {logs.length === 0 ? (
               <div className="py-16 text-center text-stone-500 font-serif italic text-xs">
-                No attendance logs found for the selected department or query.
+                No attendance logs found matching this department or query.
               </div>
             ) : (
               <div className="space-y-3">
@@ -198,6 +370,12 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
                         <span className="font-mono text-[#a51c30] bg-[#a51c30]/10 border border-[#a51c30]/20 px-2 py-0.5 rounded text-[11px] font-bold">
                           {log.studentDetails?.rollNumber || 'N/A'}
                         </span>
+                        {log.studentDetails?.contact && (
+                          <span className="font-mono text-stone-600 bg-white border border-stone-200 px-1.5 py-0.5 rounded text-[10.5px] flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-stone-400" />
+                            {log.studentDetails?.contact}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-stone-600 font-sans">
                         <Calendar className="w-3.5 h-3.5 text-[#a51c30]" />
@@ -208,7 +386,7 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-stone-700 pt-1">
                       <div>
                         <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Standing & Class</span>
-                        <span className="font-semibold text-stone-900">{log.studentDetails?.year} ({log.studentDetails?.classBatch})</span>
+                        <span className="font-semibold text-stone-900">{log.studentDetails?.year} ({log.studentDetails?.classBatch || 'General'})</span>
                       </div>
 
                       <div>
@@ -219,80 +397,16 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost }) {
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Skipped Periods</span>
+                        <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Total Lectures Missed</span>
                         <span className="font-bold text-[#a51c30]">
-                          {log.attendanceLog?.totalLecturesSkipped} {log.attendanceLog?.totalLecturesSkipped === 1 ? 'Period' : 'Periods'} 
-                          ({log.attendanceLog?.skippedLectureNumbers?.map((n) => `L${n}`).join(', ')})
+                          {log.attendanceLog?.totalLecturesSkipped} {log.attendanceLog?.totalLecturesSkipped === 1 ? 'Period' : 'Periods'}
+                          {log.attendanceLog?.extraAttendance > 0 ? ` (+${log.attendanceLog.extraAttendance} Extra)` : ''}
                         </span>
                       </div>
 
                       <div>
                         <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Remarks</span>
                         <span className="text-stone-600 truncate block font-sans">{log.attendanceLog?.remarks || '-'}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB 2: CUMULATIVE ATTENDANCE COUNT (ALL DAYS) */}
-        {!loading && !error && activeTab === 'counts' && (
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 mt-2">
-            {counts.length === 0 ? (
-              <div className="py-16 text-center text-stone-500 font-serif italic text-xs">
-                No cumulative attendance count entries found for this department.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {counts.map((item, index) => (
-                  <div
-                    key={item._id || item.rollNumber || index}
-                    className="p-4 rounded-2xl bg-[#faf9f6] border border-stone-200 hover:border-[#a51c30]/50 transition-all text-xs"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-200">
-                      <div className="flex items-center gap-2">
-                        <span className="font-serif font-bold text-stone-900 text-base">{item.name}</span>
-                        <span className="font-mono text-[#a51c30] bg-[#a51c30]/10 border border-[#a51c30]/20 px-2 py-0.5 rounded text-[11px] font-bold">
-                          {item.rollNumber}
-                        </span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-serif font-bold bg-[#a51c30] text-white uppercase">
-                          {item.department}
-                        </span>
-                      </div>
-
-                      {/* Cumulative Total Days Badge */}
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 font-serif font-bold text-xs flex items-center gap-1.5 shadow-sm">
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Total Days Attended: <strong>{item.totalDaysAttended || (item.dutyDates ? item.dutyDates.length : 0)} Days</strong></span>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 text-stone-700">
-                      <div>
-                        <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Academic Class</span>
-                        <span className="font-semibold text-stone-900">{item.year || '-'} · {item.classBatch || '-'}</span>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Total Periods Skipped</span>
-                        <span className="font-bold text-[#a51c30] flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5" />
-                          {item.totalLecturesSkipped || 0} Total Periods
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] text-stone-500 uppercase font-serif font-bold block">Logged Duty Dates</span>
-                        <span className="text-stone-700 font-mono text-[11px] block truncate" title={item.dutyDates?.join(', ')}>
-                          {Array.isArray(item.dutyDates) && item.dutyDates.length > 0
-                            ? item.dutyDates.join(', ')
-                            : 'None recorded'}
-                        </span>
                       </div>
                     </div>
                   </div>

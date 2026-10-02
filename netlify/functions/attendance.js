@@ -18,21 +18,27 @@ const clean = (v, max) =>
 function buildEntry(input, admin) {
   const name = clean(input?.name, 80);
   const rollNumber = clean(input?.rollNumber, 30).toUpperCase();
-  const classBatch = clean(input?.classBatch, 20).toUpperCase();
+  const contact = clean(input?.contact, 20);
+  const classBatch = clean(input?.classBatch, 20).toUpperCase() || 'GENERAL';
   const remarks = clean(input?.remarks, 200);
   const date = clean(input?.date, 10);
   const team = EVENT_TEAMS.find((t) => t.id === input?.teamId);
   const validLectureIds = STANDARD_LECTURES.map((l) => l.id);
   const lectures = Array.isArray(input?.lectures) ? [...new Set(input.lectures)] : [];
+  const extraAttendance = Math.max(0, parseInt(input?.extraAttendance, 10) || 0);
 
   if (!name) return { error: 'Student name is required' };
   if (!rollNumber) return { error: 'Roll number is required' };
-  if (!classBatch) return { error: 'Class / batch is required' };
   if (!ACADEMIC_YEARS.includes(input?.year)) return { error: 'Invalid academic year' };
   if (!team) return { error: 'Invalid team' };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return { error: 'Invalid date' };
-  if (!lectures.length || !lectures.every((n) => validLectureIds.includes(n))) return { error: 'Invalid lectures' };
+  if (lectures.length === 0 && extraAttendance === 0) {
+    return { error: 'Select at least one lecture or add extra attendance (+1/+2)' };
+  }
+  if (!lectures.every((n) => validLectureIds.includes(n))) return { error: 'Invalid lectures' };
   lectures.sort((a, b) => a - b);
+
+  const totalLecturesSkipped = lectures.length + extraAttendance;
 
   return {
     entry: {
@@ -40,11 +46,12 @@ function buildEntry(input, admin) {
       event: 'ENIGMA 2026',
       submittedAt: new Date().toISOString(),
       loggedBy: admin,
-      studentDetails: { name, rollNumber, year: input.year, classBatch },
+      studentDetails: { name, rollNumber, contact, year: input.year, classBatch },
       dutyDepartment: { id: team.id, name: team.name, badge: team.badge },
       attendanceLog: {
         date,
-        totalLecturesSkipped: lectures.length,
+        totalLecturesSkipped,
+        extraAttendance,
         skippedLectureNumbers: lectures,
         skippedLecturesDetail: lectures.map((id) => ({
           lectureNumber: id,
@@ -68,7 +75,7 @@ export default async (req) => {
 
   try {
     // -------------------------------------------------------------
-    // GET /api/attendance: Filter logs or cumulative counts by department
+    // GET /api/attendance: Filter logs or cumulative counts by department & search
     // -------------------------------------------------------------
     if (req.method === 'GET') {
       const department = searchParams.get('department') || 'all';
@@ -97,13 +104,47 @@ export default async (req) => {
           const s = search.toLowerCase();
           const name = log.studentDetails?.name?.toLowerCase() || '';
           const roll = log.studentDetails?.rollNumber?.toLowerCase() || '';
+          const contact = log.studentDetails?.contact?.toLowerCase() || '';
           const cls = log.studentDetails?.classBatch?.toLowerCase() || '';
-          if (!name.includes(s) && !roll.includes(s) && !cls.includes(s)) return false;
+          if (!name.includes(s) && !roll.includes(s) && !contact.includes(s) && !cls.includes(s)) return false;
         }
         return true;
       });
 
-      return json({ logs: filtered, source: 'local_storage', warning: 'MongoDB not connected' });
+      if (type === 'counts') {
+        // Aggregate cumulative counts from local logs
+        const map = new Map();
+        filtered.forEach((log) => {
+          const roll = log.studentDetails?.rollNumber;
+          if (!roll) return;
+          if (!map.has(roll)) {
+            map.set(roll, {
+              rollNumber: roll,
+              name: log.studentDetails?.name,
+              contact: log.studentDetails?.contact || '',
+              department: log.dutyDepartment?.id,
+              year: log.studentDetails?.year,
+              classBatch: log.studentDetails?.classBatch,
+              dutyDates: [],
+              totalLecturesSkipped: 0,
+            });
+          }
+          const item = map.get(roll);
+          if (log.attendanceLog?.date && !item.dutyDates.includes(log.attendanceLog.date)) {
+            item.dutyDates.push(log.attendanceLog.date);
+          }
+          item.totalLecturesSkipped += (log.attendanceLog?.totalLecturesSkipped || 0);
+        });
+
+        const counts = Array.from(map.values()).map((c) => ({
+          ...c,
+          totalDaysAttended: c.dutyDates.length,
+        })).sort((a, b) => b.totalDaysAttended - a.totalDaysAttended);
+
+        return json({ counts, source: 'local_storage', warning: 'Using local storage' });
+      }
+
+      return json({ logs: filtered, source: 'local_storage', warning: 'Using local storage' });
     }
 
     // -------------------------------------------------------------
@@ -124,6 +165,7 @@ export default async (req) => {
         await saveStudent({
           name: entry.studentDetails.name,
           rollNumber: entry.studentDetails.rollNumber,
+          contact: entry.studentDetails.contact,
           year: entry.studentDetails.year,
           classBatch: entry.studentDetails.classBatch,
           department: entry.dutyDepartment.id,

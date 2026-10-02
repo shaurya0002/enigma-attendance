@@ -1,5 +1,6 @@
 import { getConfig, getAdmin, isSafePost, readJson, json } from '../lib/auth.js';
 import { saveStudent, getStudents, checkMongoConnection } from '../lib/mongodb.js';
+import { searchLocalStudents, writeStudents, readStudents } from '../lib/storage.js';
 import { EVENT_TEAMS, ACADEMIC_YEARS } from '../../src/config/teams.js';
 
 export default async (req) => {
@@ -22,16 +23,14 @@ export default async (req) => {
       const year = searchParams.get('year') || 'all';
 
       const mongoStatus = await checkMongoConnection();
-      if (!mongoStatus.connected) {
-        return json({
-          warning: 'MongoDB not currently connected',
-          error: mongoStatus.error,
-          students: [],
-        }, 200);
+      if (mongoStatus.connected) {
+        const students = await getStudents({ department, search, year });
+        return json({ students, source: 'mongodb' });
       }
 
-      const students = await getStudents({ department, search, year });
-      return json({ students });
+      // Offline / Local File Storage Fallback
+      const students = await searchLocalStudents({ department, search, year });
+      return json({ students, source: 'local_storage', warning: 'Using local storage' });
     }
 
     // -------------------------------------------------------------
@@ -44,34 +43,49 @@ export default async (req) => {
 
       const name = typeof data?.name === 'string' ? data.name.trim().slice(0, 80) : '';
       const rollNumber = typeof data?.rollNumber === 'string' ? data.rollNumber.trim().toUpperCase().slice(0, 30) : '';
+      const contact = typeof data?.contact === 'string' ? data.contact.trim().slice(0, 20) : '';
       const year = data?.year;
-      const classBatch = typeof data?.classBatch === 'string' ? data.classBatch.trim().toUpperCase().slice(0, 20) : '';
+      const classBatch = typeof data?.classBatch === 'string' ? data.classBatch.trim().toUpperCase().slice(0, 20) : 'General';
       const department = typeof data?.department === 'string' ? data.department.trim().toLowerCase() : '';
 
       if (!name) return json({ error: 'Student name is required' }, 400);
       if (!rollNumber) return json({ error: 'Roll number is required' }, 400);
       if (!ACADEMIC_YEARS.includes(year)) return json({ error: 'Invalid academic year' }, 400);
-      if (!classBatch) return json({ error: 'Class / batch is required' }, 400);
       if (!EVENT_TEAMS.some((t) => t.id === department)) return json({ error: 'Invalid department' }, 400);
 
       const mongoStatus = await checkMongoConnection();
-      if (!mongoStatus.connected) {
-        return json({
-          error: 'MongoDB is required to register student credentials',
-          details: mongoStatus.error,
-        }, 503);
+      let studentDoc;
+
+      if (mongoStatus.connected) {
+        studentDoc = await saveStudent({
+          name,
+          rollNumber,
+          contact,
+          year,
+          classBatch,
+          department,
+          addedBy: admin,
+        });
+      } else {
+        // Fallback local persistence
+        const existing = await readStudents();
+        const newStudent = {
+          id: `STU_${Date.now()}`,
+          name,
+          rollNumber,
+          contact,
+          year,
+          classBatch,
+          department,
+          addedBy: admin,
+          createdAt: new Date().toISOString(),
+        };
+        const updated = [newStudent, ...existing.filter((s) => !(s.rollNumber === rollNumber && s.department === department))];
+        await writeStudents(updated);
+        studentDoc = newStudent;
       }
 
-      const student = await saveStudent({
-        name,
-        rollNumber,
-        year,
-        classBatch,
-        department,
-        addedBy: admin,
-      });
-
-      return json({ student, message: 'Student credential registered successfully' }, 201);
+      return json({ student: studentDoc, message: 'Student credential registered successfully' }, 201);
     }
 
     return json({ error: 'Method not allowed' }, 405, { Allow: 'GET, POST' });
