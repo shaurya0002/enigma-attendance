@@ -128,7 +128,6 @@ export default function App() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         formData={submittedData}
-        jsonBinResult={{ success: true, isMock: false }}
       />
 
       {/* Admin Live Records Viewer Modal */}

@@ -7,8 +7,6 @@ export const SESSION_TTL_S = 8 * 60 * 60; // 8 hours
 const DEFAULT_SESSION_SECRET = 'NeonGenesisEvangelionTokyo3NERVEVA01ShinjiIkariReiAyanamiAsukaLangleySoryuKaworuNERVSEELEAngelsATFieldHumanInstrumentalityGendoIkariYuiIkariMisatoKatsuragiRitsukoAkagiPenPenLCLGeofrontEntryPlugSyncRatioImpactThirdImpactRedCrossBook2ndImpact4thImpactEndOfEvangelion';
 const DEFAULT_ADMIN_KEY = 'NeonGene';
 const DEFAULT_ADMIN_USERS = '{"yash":"hailnerv", "shau":"hailnerv"}';
-const DEFAULT_JSONBIN_MASTER_KEY = '$2a$10$NpCFhlE4YOaHJWx4LjyZ7OxAtuD5uY5hoorWon0qD7kJWRG6AjMyK';
-const DEFAULT_JSONBIN_BIN_ID = '6abd16e2ac6210605a05a03d';
 
 /* ---------- config ---------- */
 export function getConfig() {
@@ -34,12 +32,6 @@ export function getConfig() {
     }
   } catch { /* handled below */ }
   if (!users || users.size === 0) problems.push('ADMIN_USERS (JSON object of username -> password)');
-
-  const jsonbinMasterKey = env.JSONBIN_MASTER_KEY || DEFAULT_JSONBIN_MASTER_KEY;
-  if (!jsonbinMasterKey) problems.push('JSONBIN_MASTER_KEY');
-
-  const jsonbinBinId = env.JSONBIN_BIN_ID || DEFAULT_JSONBIN_BIN_ID;
-  if (!jsonbinBinId) problems.push('JSONBIN_BIN_ID');
 
   if (problems.length) {
     console.error('[config] Missing/invalid env vars:', problems.join(', '));

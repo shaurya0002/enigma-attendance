@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { CheckCircle2, X, Copy, Database, CloudCheck, AlertCircle, AlertTriangle, BookOpen } from 'lucide-react';
+import { CheckCircle2, X, Copy, Database, CloudCheck, BookOpen } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-export default function SubmissionModal({ isOpen, onClose, formData, jsonBinResult }) {
+export default function SubmissionModal({ isOpen, onClose, formData }) {
   useEffect(() => {
     if (isOpen) {
       // Launch confetti on open
@@ -28,9 +28,6 @@ export default function SubmissionModal({ isOpen, onClose, formData, jsonBinResu
     alert('Form payload copied to clipboard!');
   };
 
-  const isLiveBin = jsonBinResult && jsonBinResult.success && !jsonBinResult.isMock;
-  const isError = jsonBinResult && jsonBinResult.error;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
       <div className="relative w-full max-w-lg bg-white border border-[#a51c30]/30 rounded-3xl p-6 shadow-2xl text-stone-900 overflow-hidden">
@@ -55,41 +52,16 @@ export default function SubmissionModal({ isOpen, onClose, formData, jsonBinResu
               Attendance Logged!
             </h3>
             <p className="text-xs text-stone-500 font-serif italic">
-              {isLiveBin 
-                ? 'Official Record Saved to Backend Database' 
-                : isError 
-                  ? 'Local Record Generated (Backend Warning)' 
-                  : 'Official Attendance Entry Registered'}
+              Official Record Saved to Database Ledger
             </p>
           </div>
         </div>
 
-        {/* JSONBin Sync Status Banners */}
-        {isLiveBin && (
-          <div className="flex items-center gap-2 p-2.5 mb-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-sans">
-            <CloudCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-            <span>Attendance successfully verified and appended to live database.</span>
-          </div>
-        )}
-
-        {isError && (
-          <div className="flex items-start gap-2 p-3 mb-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-sans">
-            <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <span className="font-semibold text-rose-900 block mb-0.5">Database Notice: {jsonBinResult.error}</span>
-              <span className="text-[11px] text-rose-700 leading-relaxed block">
-                Ensure JSONBin credentials match runtime configuration.
-              </span>
-            </div>
-          </div>
-        )}
-
-        {!isLiveBin && !isError && (
-          <div className="flex items-center gap-2 p-2.5 mb-3 bg-[#faf9f6] border border-stone-200 rounded-xl text-xs text-stone-700 font-sans">
-            <AlertCircle className="w-4 h-4 text-[#a51c30] flex-shrink-0" />
-            <span>Attendance entry compiled. Showing official payload preview.</span>
-          </div>
-        )}
+        {/* Sync Status Banner */}
+        <div className="flex items-center gap-2 p-2.5 mb-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-sans">
+          <CloudCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>Attendance successfully recorded in the official database ledger.</span>
+        </div>
 
         {/* Payload Preview Box */}
         <div className="relative mb-5 bg-[#1e1e1e] border border-stone-800 rounded-xl p-3.5 font-mono text-xs text-[#f5e6be] overflow-x-auto max-h-60 custom-scrollbar">

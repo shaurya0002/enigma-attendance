@@ -1,7 +1,14 @@
 /* eslint-disable no-control-regex */
 import crypto from 'node:crypto';
 import { getConfig, getAdmin, isSafePost, readJson, json } from '../lib/auth.js';
-import { readLogs, writeLogs } from '../lib/jsonbin.js';
+import { readLogs, writeLogs } from '../lib/storage.js';
+import {
+  checkMongoConnection,
+  logAttendance,
+  getAttendanceLogs,
+  getAttendanceCounts,
+  saveStudent,
+} from '../lib/mongodb.js';
 import { EVENT_TEAMS, ACADEMIC_YEARS, STANDARD_LECTURES } from '../../src/config/teams.js';
 
 const clean = (v, max) =>
@@ -56,11 +63,52 @@ export default async (req) => {
   const admin = getAdmin(req, cfg);
   if (!admin) return json({ error: 'Unauthorized' }, 401);
 
+  const url = new URL(req.url, 'http://localhost');
+  const searchParams = url.searchParams;
+
   try {
+    // -------------------------------------------------------------
+    // GET /api/attendance: Filter logs or cumulative counts by department
+    // -------------------------------------------------------------
     if (req.method === 'GET') {
-      return json({ logs: await readLogs() });
+      const department = searchParams.get('department') || 'all';
+      const search = searchParams.get('search') || '';
+      const type = searchParams.get('type') || 'logs'; // 'logs' or 'counts'
+      const date = searchParams.get('date') || '';
+
+      const mongoStatus = await checkMongoConnection();
+
+      if (mongoStatus.connected) {
+        if (type === 'counts') {
+          const counts = await getAttendanceCounts({ department, search });
+          return json({ counts, source: 'mongodb' });
+        }
+
+        const logs = await getAttendanceLogs({ department, search, date });
+        return json({ logs, source: 'mongodb' });
+      }
+
+      // Offline / Local File Storage Fallback
+      const allLogs = await readLogs();
+      const filtered = allLogs.filter((log) => {
+        if (department !== 'all' && log.dutyDepartment?.id !== department) return false;
+        if (date && log.attendanceLog?.date !== date) return false;
+        if (search) {
+          const s = search.toLowerCase();
+          const name = log.studentDetails?.name?.toLowerCase() || '';
+          const roll = log.studentDetails?.rollNumber?.toLowerCase() || '';
+          const cls = log.studentDetails?.classBatch?.toLowerCase() || '';
+          if (!name.includes(s) && !roll.includes(s) && !cls.includes(s)) return false;
+        }
+        return true;
+      });
+
+      return json({ logs: filtered, source: 'local_storage', warning: 'MongoDB not connected' });
     }
 
+    // -------------------------------------------------------------
+    // POST /api/attendance: Log attendance and update total days count
+    // -------------------------------------------------------------
     if (req.method === 'POST') {
       if (!isSafePost(req)) return json({ error: 'Bad request' }, 400);
       const { data, tooLarge } = await readJson(req, 8000);
@@ -69,15 +117,39 @@ export default async (req) => {
       const { entry, error } = buildEntry(data, admin);
       if (error) return json({ error }, 400);
 
+      const mongoStatus = await checkMongoConnection();
+
+      if (mongoStatus.connected) {
+        // 1. Ensure student credentials / identity are registered in MongoDB
+        await saveStudent({
+          name: entry.studentDetails.name,
+          rollNumber: entry.studentDetails.rollNumber,
+          year: entry.studentDetails.year,
+          classBatch: entry.studentDetails.classBatch,
+          department: entry.dutyDepartment.id,
+          addedBy: admin,
+        });
+
+        // 2. Insert attendance record & atomically increment all-days attendance counts
+        await logAttendance({
+          studentDetails: entry.studentDetails,
+          dutyDepartment: entry.dutyDepartment,
+          attendanceLog: entry.attendanceLog,
+          loggedBy: admin,
+        });
+      }
+
+      // Always backup to local storage
       const logs = await readLogs();
       await writeLogs([entry, ...logs]);
-      return json({ entry }, 201);
+
+      return json({ entry, storedInMongo: mongoStatus.connected }, 201);
     }
 
     return json({ error: 'Method not allowed' }, 405, { Allow: 'GET, POST' });
   } catch (err) {
     console.error('[attendance]', err);
-    return json({ error: 'Storage backend error' }, 502);
+    return json({ error: 'Storage backend error', message: err.message }, 502);
   }
 };
 
