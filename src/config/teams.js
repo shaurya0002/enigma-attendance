@@ -13,54 +13,59 @@
 
 export const EVENT_TEAMS = [
   {
-    id: 'tech_team',
-    name: 'Tech Team',
-    description: 'Web development, app management, audio-visual technical setups, coding events & live streaming.',
+    id: 'decor',
+    name: 'Decor',
+    description: 'Stage setup, venue aesthetics, craft installations, theme visuals and creative background ambiance.',
+    badge: 'Decoration'
+  },
+  {
+    id: 'technical',
+    name: 'Technical',
+    description: 'Web development, portal management, sound engineering, AV equipment, live systems and technical ops.',
     badge: 'Tech & IT'
   },
   {
-    id: 'management_team',
-    name: 'Management Team',
-    description: 'Event coordination, schedule management, crowd control & overall execution.',
-    badge: 'Core Ops'
+    id: 'design',
+    name: 'Design',
+    description: 'Graphic design, banners, social media assets, brochures, badges and visual branding materials.',
+    badge: 'Design'
   },
   {
-    id: 'decoration_team',
-    name: 'Decoration Team',
-    description: 'Stage setup, neon lighting, party theme aesthetics, craft & visual installations.',
-    badge: 'Creative Art'
-  },
-  {
-    id: 'media_photography',
-    name: 'Media & Photography',
-    description: 'Event coverage, video editing, social media management & live press.',
+    id: 'media',
+    name: 'Media',
+    description: 'Event photo coverage, videography, highlights reels editing, press releases and digital publication.',
     badge: 'Media'
   },
   {
-    id: 'logistics_operations',
-    name: 'Logistics & Operations',
-    description: 'Resource allocation, equipment movement, venue setup & hospitality.',
-    badge: 'Logistics'
+    id: 'activity',
+    name: 'Activity',
+    description: 'On-ground activity coordination, student engagements, game stalls, event logistics and crowd interaction.',
+    badge: 'Activities'
   },
   {
-    id: 'stage_anchoring',
-    name: 'Stage & Anchoring',
-    description: 'Host, MC duties, artist management, stage flow & performance announcements.',
-    badge: 'Performing'
+    id: 'anchoring',
+    name: 'Anchoring',
+    description: 'Stage hosting, MC duties, audience interaction, artist flow coordination and performance announcements.',
+    badge: 'Stage Host'
   },
   {
-    id: 'sponsorship_pr',
-    name: 'Sponsorship & PR',
-    description: 'Sponsor outreach, brand partnerships, PR campaigns & guest relations.',
-    badge: 'Finance & PR'
+    id: 'flashmob',
+    name: 'Flashmob',
+    description: 'Choreography, performance rehearsals, publicity dance routines and promotional activation.',
+    badge: 'Performance'
   },
   {
-    id: 'security_volunteers',
-    name: 'Security & Volunteers',
-    description: 'Gate control, pass verification, discipline enforcement & student safety.',
-    badge: 'Safety'
+    id: 'promotion',
+    name: 'Promotion',
+    description: 'Campus outreach, publicity drives, PR campaigns, student networking and event awareness.',
+    badge: 'Promotion'
+  },
+  {
+    id: 'desk_duty',
+    name: 'Desk duty',
+    description: 'Registration desk management, attendee verification, inquiry resolution and official check-in assistance.',
+    badge: 'Helpdesk'
   }
-  /* BOILERPLATE: Add your extra teams below by copying the format above! */
 ];
 
 export const ACADEMIC_YEARS = ['2nd Year', '3rd Year', '4th Year'];
