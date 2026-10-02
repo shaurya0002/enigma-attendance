@@ -57,7 +57,7 @@ export default function LoginScreen({ onLoggedIn }) {
             </div>
           </div>
           <h1 className="text-xl font-serif font-bold text-stone-900 tracking-tight">ENIGMA 2026</h1>
-          <p className="text-xs text-[#a51c30] font-serif italic mt-0.5">Authorised Officers Only</p>
+          <p className="text-xs text-[#a51c30] font-serif italic mt-0.5">Authorised Officials Only</p>
         </div>
 
         <div className="relative">
