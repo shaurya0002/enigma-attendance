@@ -1,54 +1,56 @@
 import React from 'react';
-import { Sparkles, Calendar, PartyPopper, Flame } from 'lucide-react';
 
 export default function EventHeader() {
   return (
     <div className="text-center mb-8 relative">
-      {/* Top Fest Badge */}
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-950/60 border border-purple-500/30 text-cyan-300 text-xs font-semibold uppercase tracking-widest shadow-[0_0_15px_rgba(168,85,247,0.15)] mb-3 backdrop-blur-md">
-        <Sparkles className="w-3.5 h-3.5 text-rose-400 animate-spin" style={{ animationDuration: '6s' }} />
-        <span>Official College Fest 2026</span>
-        <Flame className="w-3.5 h-3.5 text-amber-400" />
+      {/* Harvard Shield & Veritas Crest emblem */}
+      <div className="flex justify-center mb-3">
+        <div className="inline-flex flex-col items-center">
+          {/* Harvard Crimson Shield Icon */}
+          <div className="w-14 h-16 bg-[#a51c30] rounded-b-xl border-2 border-[#c59b27] flex flex-col items-center justify-center text-white shadow-md relative group">
+            <span className="text-[9px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">VE</span>
+            <span className="text-[9px] font-serif font-bold tracking-widest leading-none text-[#f5e6be] my-0.5">RI</span>
+            <span className="text-[9px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">TAS</span>
+          </div>
+        </div>
+      </div>
+
+      {/* University Sub-header */}
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#a51c30]/10 border border-[#a51c30]/20 text-[#a51c30] text-[11px] font-serif font-bold uppercase tracking-widest mb-2">
+        <span>Harvard University Official Registry</span>
       </div>
 
       {/* Main Title: ENIGMA 2026 */}
-      <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-2">
-        <span className="bg-clip-text text-transparent bg-gradient-to-r from-rose-400 via-indigo-300 to-cyan-300 drop-shadow-[0_0_25px_rgba(244,63,94,0.4)]">
-          ENIGMA 2026
-        </span>
+      <h1 className="text-3xl md:text-5xl font-serif font-bold tracking-tight text-[#1e1e1e] mb-2">
+        ENIGMA 2026
       </h1>
 
-      <p className="text-indigo-200/80 font-medium text-sm md:text-base tracking-wide flex items-center justify-center gap-2 mb-4">
-        <PartyPopper className="w-4 h-4 text-rose-400 inline" />
-        Student Duty Attendance Logger
-        <Calendar className="w-4 h-4 text-cyan-400 inline" />
+      <p className="text-[#a51c30] font-serif italic text-sm md:text-base tracking-wide flex items-center justify-center gap-2 mb-5">
+        <span>Student Duty & Attendance Portal</span>
       </p>
 
-      {/* 
-        ========================================================================
-        BOILERPLATE: EVENT DETAILS & PARAGRAPH SECTION
-        ========================================================================
-        You can raw-code your own paragraph details or announcements here!
-        Simply edit or expand the text inside the <p> tags below.
-        ========================================================================
-      */}
-      <div className="max-w-xl mx-auto p-4 rounded-xl bg-indigo-950/30 border border-indigo-700/30 backdrop-blur-md text-left text-xs md:text-sm text-indigo-100/90 leading-relaxed shadow-lg relative overflow-hidden group">
-        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-rose-400 via-purple-500 to-cyan-400" />
+      {/* Decorative Gold Rule */}
+      <div className="flex items-center justify-center gap-3 mb-6 max-w-sm mx-auto">
+        <div className="h-px flex-1 bg-[#c59b27]/40" />
+        <span className="text-[#c59b27] text-xs font-serif">❖</span>
+        <div className="h-px flex-1 bg-[#c59b27]/40" />
+      </div>
+
+      {/* Academic Notice Box */}
+      <div className="max-w-xl mx-auto p-4 rounded-xl bg-[#faf9f6] border border-[#a51c30]/20 text-left text-xs md:text-sm text-[#2d3748] leading-relaxed shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-1.5 h-full bg-[#a51c30]" />
         
-        <div className="flex items-center justify-between mb-1.5 border-b border-indigo-800/30 pb-1">
-          <span className="text-cyan-400 font-semibold text-xs tracking-wider uppercase flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping inline-block" />
-            Notice / Event Info
+        <div className="flex items-center justify-between mb-2 border-b border-[#a51c30]/15 pb-1.5">
+          <span className="text-[#a51c30] font-serif font-bold text-xs tracking-wider uppercase flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#a51c30] inline-block" />
+            Official Academic Notice
           </span>
-          <span className="text-[10px] text-indigo-400/60 font-mono">[Editable Paragraph Boilerplate]</span>
+          <span className="text-[10px] text-stone-500 font-serif font-semibold uppercase">Harvard Academic Affairs</span>
         </div>
 
-        {/* --- EDIT YOUR PARAGRAPH TEXT HERE --- */}
-        <p className="mt-1 text-indigo-100/80">
-          Welcome to <span className="text-cyan-300 font-semibold">ENIGMA 2026</span>! All organizing team members (Tech, Management, Decoration, etc.) are requested to log their daily skipped lectures during duty hours. Ensure your roll number and class/batch details (e.g. B1, B2) are accurate for official verification.
+        <p className="text-stone-700 font-sans text-xs md:text-sm">
+          Welcome to <strong className="text-[#a51c30]">ENIGMA 2026</strong>. All appointed student duty officers across technical, administrative, and management committees are required to log their official duty hours and skipped lectures for verified academic attendance credit.
         </p>
-        {/* --- END OF EDITABLE PARAGRAPH --- */}
-
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, User, Lock, KeyRound, Loader2, AlertCircle } from 'lucide-react';
+import { User, Lock, KeyRound, Loader2, AlertCircle } from 'lucide-react';
 import PartyBackground from './PartyBackground';
 import { login } from '../services/api';
 
@@ -33,22 +33,31 @@ export default function LoginScreen({ onLoggedIn }) {
     }
   };
 
-  const field = 'w-full pl-10 pr-4 py-2.5 bg-[#090716] border border-indigo-900/60 focus:border-cyan-400 rounded-xl text-white placeholder-indigo-300/30 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/30 transition-all';
-  const icon = 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-indigo-400';
+  const field = 'w-full pl-10 pr-4 py-2.5 bg-[#faf9f6] border border-stone-300 focus:border-[#a51c30] rounded-xl text-stone-900 placeholder-stone-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#a51c30]/20 transition-all font-sans';
+  const icon = 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-500';
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4">
       <PartyBackground />
+      
       <form
         onSubmit={submit}
-        className="relative z-10 w-full max-w-sm bg-[#0d0a1c]/90 border border-indigo-700/30 rounded-3xl p-6 md:p-8 shadow-[0_0_50px_rgba(30,15,56,0.5)] backdrop-blur-2xl space-y-4"
+        className="relative z-10 w-full max-w-sm bg-white border border-[#a51c30]/30 rounded-3xl p-6 md:p-8 shadow-xl space-y-4 text-left overflow-hidden"
       >
-        <div className="text-center mb-2">
-          <div className="inline-flex p-3 rounded-xl bg-indigo-900/50 border border-indigo-700/40 text-cyan-400 mb-3">
-            <ShieldCheck className="w-6 h-6" />
+        {/* Harvard Crimson Top Accent Bar */}
+        <div className="absolute top-0 left-0 right-0 h-2 bg-[#a51c30]" />
+
+        {/* Harvard Shield Crest */}
+        <div className="text-center pt-2 mb-2">
+          <div className="flex justify-center mb-2">
+            <div className="w-12 h-14 bg-[#a51c30] rounded-b-lg border-2 border-[#c59b27] flex flex-col items-center justify-center text-white shadow-sm">
+              <span className="text-[8px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">VE</span>
+              <span className="text-[8px] font-serif font-bold tracking-widest leading-none text-[#f5e6be] my-0.5">RI</span>
+              <span className="text-[8px] font-serif font-bold tracking-widest leading-none text-[#f5e6be]">TAS</span>
+            </div>
           </div>
-          <h1 className="text-xl font-bold text-white">ENIGMA 2026 Admin</h1>
-          <p className="text-xs text-indigo-300/70 mt-1">Authorised admins only</p>
+          <h1 className="text-xl font-serif font-bold text-stone-900 tracking-tight">Harvard ENIGMA</h1>
+          <p className="text-xs text-[#a51c30] font-serif italic mt-0.5">Authorised Officers Only</p>
         </div>
 
         <div className="relative">
@@ -72,8 +81,8 @@ export default function LoginScreen({ onLoggedIn }) {
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 p-2.5 bg-rose-950/50 border border-rose-500/30 rounded-xl text-xs text-rose-200">
-            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-sans">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -81,9 +90,9 @@ export default function LoginScreen({ onLoggedIn }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-cyan-500 to-violet-600 text-white font-bold text-sm tracking-wider uppercase transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+          className="w-full py-3 rounded-xl bg-[#a51c30] hover:bg-[#7f1322] border border-[#c59b27]/40 text-white font-serif font-bold text-xs tracking-widest uppercase transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 shadow-md"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign In To Portal'}
         </button>
       </form>
     </div>

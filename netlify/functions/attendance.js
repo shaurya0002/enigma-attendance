@@ -1,3 +1,4 @@
+/* eslint-disable no-control-regex */
 import crypto from 'node:crypto';
 import { getConfig, getAdmin, isSafePost, readJson, json } from '../lib/auth.js';
 import { readLogs, writeLogs } from '../lib/jsonbin.js';
