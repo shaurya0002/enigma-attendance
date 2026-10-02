@@ -38,15 +38,9 @@ export const EVENT_TEAMS = [
   },
   {
     id: 'activity',
-    name: 'Activity',
+    name: 'Activity & Desk Duty',
     description: 'On-ground activity coordination, student engagements, game stalls, event logistics and crowd interaction.',
     badge: 'Activities'
-  },
-  {
-    id: 'anchoring',
-    name: 'Anchoring',
-    description: 'Stage hosting, audience engagement, announcements, ceremony presentations and speaker introductions.',
-    badge: 'Anchoring'
   },
   {
     id: 'flashmob',
@@ -60,12 +54,6 @@ export const EVENT_TEAMS = [
     description: 'Campus outreach, publicity drives, PR campaigns, student networking and event awareness.',
     badge: 'Promotion'
   },
-  {
-    id: 'desk_duty',
-    name: 'Desk duty',
-    description: 'Registration desk management, attendee verification, inquiry resolution and official check-in assistance.',
-    badge: 'Helpdesk'
-  }
 ];
 
 export const ACADEMIC_YEARS = ['2nd Year', '3rd Year', '4th Year'];
