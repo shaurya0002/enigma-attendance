@@ -1,5 +1,46 @@
 import { MongoClient } from 'mongodb';
+import dns from 'node:dns';
+import fs from 'node:fs';
+import path from 'node:path';
 import { readStudents } from './storage.js';
+
+// Resolve SRV records reliably on Windows and diverse ISP networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Ignored
+}
+
+// Auto-load .env fallback if not pre-populated in environment
+if (!process.env.MONGODB_URI) {
+  try {
+    const candidates = [
+      path.resolve(process.cwd(), '.env'),
+      path.resolve(process.cwd(), '..', '.env'),
+    ];
+    for (const file of candidates) {
+      if (fs.existsSync(file)) {
+        const raw = fs.readFileSync(file, 'utf8');
+        raw.split('\n').forEach((l) => {
+          const trimmed = l.trim();
+          if (trimmed && !trimmed.startsWith('#')) {
+            const idx = trimmed.indexOf('=');
+            if (idx > 0) {
+              const k = trimmed.slice(0, idx).trim();
+              const v = trimmed.slice(idx + 1).trim();
+              if (!process.env[k]) {
+                process.env[k] = v;
+              }
+            }
+          }
+        });
+        break;
+      }
+    }
+  } catch {
+    // Ignore fallback errors
+  }
+}
 
 const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/enigma';
 const dbName = process.env.MONGODB_DB_NAME || 'enigma';
@@ -20,8 +61,8 @@ function getClientPromise() {
   if (!global._mongoClientPromise) {
     client = new MongoClient(uri, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 1500,
-      connectTimeoutMS: 2000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
     });
     global._mongoClientPromise = client.connect();
   }

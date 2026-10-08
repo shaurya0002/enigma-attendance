@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   X, 
   RefreshCw, 
@@ -11,14 +11,16 @@ import {
   CheckCircle,
   Phone,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Download
 } from 'lucide-react';
 import { listLogs, listAttendanceCounts, listStudents } from '../services/api';
-import { EVENT_TEAMS } from '../config/teams';
+import { getVisibleTeams } from '../config/teams';
 import { filterRoster } from '../data/studentsData';
 
 export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, currentAdmin }) {
   const isMaster = !currentAdmin || currentAdmin.department === 'all' || currentAdmin.role === 'master_admin' || currentAdmin.role === 'super_admin';
+  const visibleTeams = getVisibleTeams(isMaster);
   const defaultDept = !isMaster && currentAdmin?.department ? currentAdmin.department : 'all';
 
   const [activeTab, setActiveTab] = useState('summary'); // 'summary' or 'all_logs'
@@ -26,6 +28,8 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, current
   const selectedDept = isMaster ? masterSelectedDept : (currentAdmin?.department || defaultDept);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedStudents, setExpandedStudents] = useState({});
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef(null);
 
   const [logs, setLogs] = useState([]);
   const [counts, setCounts] = useState(() =>
@@ -116,6 +120,15 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, current
         }
       });
 
+      // Pin students with logged attendance/days attended to the top
+      combined.sort((a, b) => {
+        const daysDiff = (b.totalDaysAttended || 0) - (a.totalDaysAttended || 0);
+        if (daysDiff !== 0) return daysDiff;
+        const lecsDiff = (b.totalLecturesSkipped || 0) - (a.totalLecturesSkipped || 0);
+        if (lecsDiff !== 0) return lecsDiff;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+
       setCounts(combined);
     } catch (err) {
       setLoading(false);
@@ -134,6 +147,115 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, current
       ignore = true;
     };
   }, [isOpen, loadData]);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setShowExportMenu(false);
+      }
+    };
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [showExportMenu]);
+
+  // CSV Generation & Download Handlers (Strictly Master / Super Admin)
+  const escapeCsv = (val) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const triggerDownload = (csvContent, filename) => {
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportSummaryCsv = () => {
+    const headers = [
+      'Student Name',
+      'University Roll Number',
+      'Contact Number',
+      'Department',
+      'Academic Year',
+      'Class / Batch',
+      'Total Duty Days Attended',
+      'Total Lectures Skipped / Credited',
+      'Dates of Duty Attended',
+    ];
+
+    const rows = counts.map((c) => [
+      escapeCsv(c.name),
+      escapeCsv(c.rollNumber),
+      escapeCsv(c.contact || ''),
+      escapeCsv(c.department || selectedDept),
+      escapeCsv(c.year || ''),
+      escapeCsv(c.classBatch || 'General'),
+      escapeCsv(c.totalDaysAttended ?? (c.dutyDates?.length || 0)),
+      escapeCsv(c.totalLecturesSkipped ?? 0),
+      escapeCsv(c.dutyDates && Array.isArray(c.dutyDates) ? c.dutyDates.join('; ') : ''),
+    ].join(','));
+
+    const csvContent = [headers.map(escapeCsv).join(','), ...rows].join('\r\n');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const deptStr = selectedDept || 'all_departments';
+    triggerDownload(csvContent, `ENIGMA_2026_Attendance_Summary_${deptStr}_${dateStr}.csv`);
+  };
+
+  const exportLogsCsv = () => {
+    const headers = [
+      'Duty Date',
+      'Student Name',
+      'University Roll Number',
+      'Contact Number',
+      'Academic Year',
+      'Class / Batch',
+      'Duty Committee',
+      'Total Lectures Missed / Credited',
+      'Extra Attendance Added',
+      'Skipped Lecture Periods',
+      'Duty Remarks',
+      'Logged By',
+      'Submission Timestamp',
+    ];
+
+    const rows = logs.map((l) => [
+      escapeCsv(l.attendanceLog?.date || ''),
+      escapeCsv(l.studentDetails?.name || ''),
+      escapeCsv(l.studentDetails?.rollNumber || ''),
+      escapeCsv(l.studentDetails?.contact || ''),
+      escapeCsv(l.studentDetails?.year || ''),
+      escapeCsv(l.studentDetails?.classBatch || 'General'),
+      escapeCsv(l.dutyDepartment?.name || l.dutyDepartment?.id || ''),
+      escapeCsv(l.attendanceLog?.totalLecturesSkipped ?? 0),
+      escapeCsv(l.attendanceLog?.extraAttendance ?? 0),
+      escapeCsv(
+        l.attendanceLog?.skippedLectureNumbers && Array.isArray(l.attendanceLog.skippedLectureNumbers)
+          ? l.attendanceLog.skippedLectureNumbers.map((n) => `Lecture ${n}`).join('; ')
+          : ''
+      ),
+      escapeCsv(l.attendanceLog?.remarks || ''),
+      escapeCsv(l.loggedBy || ''),
+      escapeCsv(l.submittedAt || ''),
+    ].join(','));
+
+    const csvContent = [headers.map(escapeCsv).join(','), ...rows].join('\r\n');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const deptStr = selectedDept || 'all_departments';
+    triggerDownload(csvContent, `ENIGMA_2026_Attendance_Logs_${deptStr}_${dateStr}.csv`);
+  };
 
   if (!isOpen) return null;
 
@@ -162,6 +284,58 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, current
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Download CSV Button - STRICTLY restricted to Master Admin and Super Admin */}
+            {isMaster && (
+              <div className="relative" ref={exportMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowExportMenu((prev) => !prev)}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-600 font-serif font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                  title="Download Attendance CSV (Master Admin & Super User Only)"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#f5e6be]" />
+                  <span className="hidden sm:inline">Download CSV</span>
+                  <ChevronDown className={`w-3 h-3 text-emerald-200 transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-1.5 w-64 bg-white border border-stone-200 rounded-2xl shadow-2xl z-50 p-1.5 space-y-1 animate-fadeIn text-left">
+                    <div className="px-3 py-1.5 border-b border-stone-100 text-[10px] font-serif font-bold uppercase tracking-wider text-stone-400">
+                      Export CSV Ledger
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportSummaryCsv();
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-emerald-50 hover:text-emerald-950 flex items-center gap-2.5 text-stone-800 font-sans cursor-pointer text-left transition-colors"
+                    >
+                      <Award className="w-4 h-4 text-[#a51c30] flex-shrink-0" />
+                      <div>
+                        <div className="font-bold font-serif text-stone-900">Student Summary CSV</div>
+                        <div className="text-[10px] text-stone-500">Totals, duty days & dates attended ({counts.length})</div>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportLogsCsv();
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full px-3 py-2 text-xs rounded-xl hover:bg-emerald-50 hover:text-emerald-950 flex items-center gap-2.5 text-stone-800 font-sans cursor-pointer text-left transition-colors"
+                    >
+                      <Calendar className="w-4 h-4 text-[#a51c30] flex-shrink-0" />
+                      <div>
+                        <div className="font-bold font-serif text-stone-900">Detailed Duty Logs CSV</div>
+                        <div className="text-[10px] text-stone-500">All chronological records & notes ({logs.length})</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={loadData}
               disabled={loading}
@@ -223,10 +397,10 @@ export default function AdminRecordsModal({ isOpen, onClose, onAuthLost, current
                   onChange={(e) => setMasterSelectedDept(e.target.value)}
                   className="px-3 py-1.5 rounded-xl bg-[#faf9f6] border border-stone-300 text-stone-800 text-xs font-serif font-bold focus:outline-none focus:border-[#a51c30] cursor-pointer"
                 >
-                  <option value="all">All Departments ({EVENT_TEAMS.length})</option>
-                  {EVENT_TEAMS.map((dept) => (
+                  <option value="all">All Departments ({visibleTeams.length})</option>
+                  {visibleTeams.map((dept) => (
                     <option key={dept.id} value={dept.id}>
-                      {dept.name}
+                      {dept.name} {dept.restricted ? '★ (Core Team)' : ''}
                     </option>
                   ))}
                 </select>

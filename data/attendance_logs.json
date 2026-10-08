@@ -1,1 +1,128 @@
-[]
+[
+  {
+    "_id": "6ac61b2781ade17b3cc68e8a",
+    "studentDetails": {
+      "name": "Yash Sharma",
+      "rollNumber": "2500100100603",
+      "contact": "6307281332",
+      "year": "2nd Year",
+      "classBatch": "GENERAL"
+    },
+    "dutyDepartment": {
+      "id": "technical",
+      "name": "Technical",
+      "badge": "Tech & IT"
+    },
+    "attendanceLog": {
+      "date": "2026-10-07",
+      "totalLecturesSkipped": 1,
+      "extraAttendance": 0,
+      "skippedLectureNumbers": [
+        6
+      ],
+      "skippedLecturesDetail": [
+        {
+          "lectureNumber": 6,
+          "timeSlot": "01:10 PM - 02:00 PM"
+        }
+      ],
+      "remarks": "Logged during ENIGMA 2026 event duties"
+    },
+    "loggedBy": "nexil42",
+    "createdAt": "2026-10-07T10:12:55.421Z"
+  },
+  {
+    "_id": "6ac61263200a66a901419e1c",
+    "studentDetails": {
+      "name": "Yash Sharma",
+      "rollNumber": "2500100100603",
+      "contact": "6307281332",
+      "year": "2nd Year",
+      "classBatch": "GENERAL"
+    },
+    "dutyDepartment": {
+      "id": "technical",
+      "name": "Technical",
+      "badge": "Tech & IT"
+    },
+    "attendanceLog": {
+      "date": "2026-10-06",
+      "totalLecturesSkipped": 5,
+      "extraAttendance": 0,
+      "skippedLectureNumbers": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "skippedLecturesDetail": [
+        {
+          "lectureNumber": 4,
+          "timeSlot": "11:30 PM - 12:20 PM"
+        },
+        {
+          "lectureNumber": 5,
+          "timeSlot": "12:20 PM - 01:10 PM"
+        },
+        {
+          "lectureNumber": 6,
+          "timeSlot": "01:10 PM - 02:00 PM"
+        },
+        {
+          "lectureNumber": 7,
+          "timeSlot": "02:00 PM - 03:40 PM"
+        },
+        {
+          "lectureNumber": 8,
+          "timeSlot": "03:40 PM - 04:30 PM"
+        }
+      ],
+      "remarks": "Logged during ENIGMA 2026 event duties"
+    },
+    "loggedBy": "nexil42",
+    "createdAt": "2026-10-07T09:35:31.478Z"
+  },
+  {
+    "_id": "6ac61245200a66a901419e1b",
+    "studentDetails": {
+      "name": "Shaurya Pandey",
+      "rollNumber": "2500100100470",
+      "contact": "6306009672",
+      "year": "2nd Year",
+      "classBatch": "GENERAL"
+    },
+    "dutyDepartment": {
+      "id": "technical",
+      "name": "Technical",
+      "badge": "Tech & IT"
+    },
+    "attendanceLog": {
+      "date": "2026-10-06",
+      "totalLecturesSkipped": 3,
+      "extraAttendance": 0,
+      "skippedLectureNumbers": [
+        6,
+        7,
+        8
+      ],
+      "skippedLecturesDetail": [
+        {
+          "lectureNumber": 6,
+          "timeSlot": "01:10 PM - 02:00 PM"
+        },
+        {
+          "lectureNumber": 7,
+          "timeSlot": "02:00 PM - 03:40 PM"
+        },
+        {
+          "lectureNumber": 8,
+          "timeSlot": "03:40 PM - 04:30 PM"
+        }
+      ],
+      "remarks": "Logged during ENIGMA 2026 event duties"
+    },
+    "loggedBy": "nexil42",
+    "createdAt": "2026-10-07T09:35:01.332Z"
+  }
+]

@@ -19,13 +19,14 @@ import {
   X,
   UserPlus
 } from 'lucide-react';
-import { EVENT_TEAMS, ACADEMIC_YEARS, STANDARD_LECTURES } from '../config/teams';
+import { EVENT_TEAMS, ACADEMIC_YEARS, STANDARD_LECTURES, getVisibleTeams } from '../config/teams';
 import { addLog, listStudents, addStudent } from '../services/api';
 import { filterRoster, registerStudentLocally } from '../data/studentsData';
 
 export default function AttendanceForm({ onSubmitSuccess, onAuthLost, currentAdmin }) {
   const isMaster = !currentAdmin || currentAdmin.department === 'all' || currentAdmin.role === 'master_admin' || currentAdmin.role === 'super_admin';
-  const defaultDept = !isMaster && currentAdmin?.department ? currentAdmin.department : EVENT_TEAMS[0].id;
+  const visibleTeams = getVisibleTeams(isMaster);
+  const defaultDept = !isMaster && currentAdmin?.department ? currentAdmin.department : (visibleTeams[0]?.id || 'decor');
 
   // Department Selection State (Master Admin can select, Sub Admin is locked)
   const [masterSelectedTeam, setMasterSelectedTeam] = useState(defaultDept);
@@ -278,7 +279,12 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost, currentAdm
   };
 
   const totalEffectivePeriods = selectedLectures.length + extraAttendance;
-  const currentDeptObj = EVENT_TEAMS.find((t) => t.id === effectiveTeam) || EVENT_TEAMS[0];
+  const currentDeptObj = EVENT_TEAMS.find((t) => t.id === effectiveTeam) || {
+    id: effectiveTeam,
+    name: currentAdmin?.departmentName || effectiveTeam,
+    description: 'Department operations and assignments.',
+    badge: 'Duty',
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-left">
@@ -323,7 +329,7 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost, currentAdm
 
             {/* Scrollable Team Selector */}
             <div className="max-h-52 overflow-y-auto pr-1 space-y-2 custom-scrollbar rounded-xl">
-              {EVENT_TEAMS.map((team) => {
+              {visibleTeams.map((team) => {
                 const isSelected = effectiveTeam === team.id;
                 return (
                   <div
@@ -342,9 +348,18 @@ export default function AttendanceForm({ onSubmitSuccess, onAuthLost, currentAdm
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
                       <div>
-                        <h4 className={`text-sm font-serif font-bold ${isSelected ? 'text-white' : 'text-stone-900'}`}>
-                          {team.name}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className={`text-sm font-serif font-bold ${isSelected ? 'text-white' : 'text-stone-900'}`}>
+                            {team.name}
+                          </h4>
+                          {team.restricted && (
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold uppercase tracking-wider ${
+                              isSelected ? 'bg-[#c59b27] text-stone-900' : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}>
+                              Core
+                            </span>
+                          )}
+                        </div>
                         <p className={`text-[11px] font-sans ${isSelected ? 'text-stone-200' : 'text-stone-500'}`}>
                           {team.description}
                         </p>

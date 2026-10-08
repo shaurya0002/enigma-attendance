@@ -13,6 +13,13 @@
 
 export const EVENT_TEAMS = [
   {
+    id: 'core_team',
+    name: 'Core Team',
+    description: 'Core organizing committee, central leadership, stage direction and overall event administration.',
+    badge: 'Core Team',
+    restricted: true, // Strictly restricted: visible only to Master Admin & Super Admin
+  },
+  {
     id: 'decor',
     name: 'Decor',
     description: 'Stage setup, venue aesthetics, craft installations, theme visuals and creative background ambiance.',
@@ -55,6 +62,16 @@ export const EVENT_TEAMS = [
     badge: 'Promotion'
   },
 ];
+
+/**
+ * Returns teams accessible to the current administrative session.
+ * Restricted teams (such as Core Team) are strictly filtered out for sub/department admins.
+ */
+export function getVisibleTeams(isMaster) {
+  if (isMaster) return EVENT_TEAMS;
+  return EVENT_TEAMS.filter((t) => !t.restricted);
+}
+
 
 export const ACADEMIC_YEARS = ['2nd Year', '3rd Year', '4th Year'];
 
